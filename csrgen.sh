@@ -1,19 +1,5 @@
 #!/bin/bash
-#
-##### Funktionsweise:#######################################################
-#  Interaktives Skript zum erstellen von csr                               #  
-#  1) Domain angeben                                                       #
-#                                                                          # 
-#  2) Cert Type auswählen:                                                 # 
-#      AlphaSSL                    Dann direkt Erstellung                  # 
-#      Wildcard                    Dann EV/ nicht EV + Parameter           # 
-#      SAN (Mit oder ohne EV)      Dann Erstellung + Parameter             # 
-#      LetsEncrypt                 Link auf service2                       # 
-#      GeoTrust EV                 Dann Erstellung + Parameter             # 
-#                                                                          # 
-#  3) Anschließend Erstellung eines Folders mit beinhaltetem .csr & .key   # 
-############################################################################
-#  
+# 
     FOLDER=~/Zertifikate/ #The .csr&.key files will be created here 
     KUERZEL=DWE           #Important for the "old_" Folder       
     echo "##WELCOME TO CSRGen##"
@@ -135,7 +121,7 @@
     echo ""
     cat "$DIRECTORY"*csr
     echo ""
-#   Opening the old cert file if nautilus exists
+    #Opening the old cert file if nautilus exists
     echo ""
     echo "If its a Certrenewal the old files may be around here: "
     FINDINGS=$(find ~/git -name *$DOMAIN*.pem*)
@@ -144,5 +130,4 @@
     #nautilus "$FINDINGS"
 exit
 #
-# TO-Do: Create Notizen
-
+# TO-Do: Create Notes

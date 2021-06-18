@@ -1,7 +1,10 @@
 package csrgen;
 import java.util.Scanner;
+
 public class Zertifikat {
-    
+/*
+1) Reading the Name of the Domain the Cert is being made for
+*/
     String FOLDER = "~/Zertifikate/";
     String KUERZEL = "DWE";
     int TYPE;
@@ -14,7 +17,9 @@ public class Zertifikat {
         DOMAIN = read.nextLine();
 
     }
-
+/*
+2) Choosing Cert Type and confirming
+*/
     public void typeEingeben(){
         System.out.prinf("%nNow let's choose the certificate type.%nThese are the Options:%n1.) AlphaSSL%n2.) Wildcard%n3.) SAN (Mit oder ohne EV)%n4.) LetsEncrypt%n5.) GeoTrust EV");
         TYPE = read.nextInt();
@@ -37,12 +42,13 @@ public class Zertifikat {
                 System.out.println("https://service2.continum.net/services/ssl-certificates");
         
             default:
-                System.out.println("Nummer nicht zwischen 1 und 5.");
+                System.out.println("Number not bet 1 and 5.");
         }
+/*
+3) Creating dedicated Folder an executing the keygen-commands in it
+*/
 
     public void datenBestätigen() {
         System.out.println("Typ des Zertifikates: "+TYPE);
     } 
 }
-
-
