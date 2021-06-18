@@ -18,6 +18,7 @@
     KUERZEL=DWE           #Important for the "old_" Folder       
     echo "##WELCOME TO CSRGen##"
     echo ""
+#
 # 1) Reading the Name of the Domain the Cert is being made for
 #
     echo "First name the Domain you want to create a csr for."
