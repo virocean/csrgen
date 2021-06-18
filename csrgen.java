@@ -50,9 +50,10 @@ public class Zertifikat {
                     System.out.println("%nNumber not between 1 and 5.%nTry again:%n");
             }    
         }
-    
-    public void datenBestätigen() {
-        System.out.printlf("%nHeres your inputs:%nCert Type: "+TYPE);
+    }
+    public void confirmInput(String String) {
+
+        System.out.printf("%nHeres your inputs:%nCert Type: "+TYPE);
         switch(TYPE){
             case 1:
                 System.out.println("AlphaSSL");
@@ -63,9 +64,9 @@ public class Zertifikat {
             case 5:
                 System.out.println("Geotrust");
             default:
-        }
-    } 
-        /*
+        } 
+    }
+/*
 3) Creating dedicated Folder an executing the keygen-commands in it
 */
 
