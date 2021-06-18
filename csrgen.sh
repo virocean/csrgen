@@ -1,7 +1,7 @@
 #!/bin/bash
 # 
     FOLDER=~/Zertifikate/ #The .csr&.key files will be created here 
-    KUERZEL=DWE           #Important for the "old_" Folder       
+    USER=DWE           #Important for the "old_" Folder       
     echo "##WELCOME TO CSRGen##"
     echo ""
 #
@@ -26,7 +26,7 @@
     echo -n "1, 2 ,3, 4 or 5?: "
     read -r TYPE
     #
-    if [ "${TYPE}" -eq 1 ]; then
+    if [ "${TYPE}" -eq 1 ] || [ "${TYPE}" -eq 5 ]; then
         PREFIX="www."
     elif [ "${TYPE}" -eq 2 ]; then
         PREFIX="wc."
@@ -35,7 +35,7 @@
         echo "Is it an Certificate with Extended Validation (EV)?"
         echo -n "yes/no: "
         read -r EV
-    elif [ "${TYPE}" -eq 3 ] || [ "${TYPE}" -eq 5 ]; then
+    elif [ "${TYPE}" -eq 3 ]; then
         PREFIX="san."
     elif [ "${TYPE}" -eq 4 ]; then
         echo "LetsEncrypt Zertifikate werden über service2 ausgestellt: "
@@ -56,9 +56,9 @@
         elif [ "${TYPE}" -eq 3 ]; then
             echo "SAN"
         elif [ "${TYPE}" -eq 5 ]; then
-            echo "SAN"
+            echo "Geotrust"
         fi
-    echo -n "EV:     "
+    echo -n "EV:        "
         if [ "${EV}" = yes ] || [ "${TYPE}" -eq 5 ]; then
             echo "Yes"
         else 
@@ -68,8 +68,8 @@
 #
 # 3) Creating dedicated Folder an executing the keygen-commands in it
 #
-    DATUM=$(date +"%Y.%m.%d")
-    DIRECTORY=$FOLDER$DATUM-$PREFIX$DOMAIN/
+    DATE=$(date +"%Y.%m.%d")
+    DIRECTORY=$FOLDER$DATE-$PREFIX$DOMAIN/
     mkdir "$DIRECTORY"
     cd "$DIRECTORY" || return
     if [ "${TYPE}" -eq 3 ]; then
@@ -116,7 +116,7 @@
         openssl req -new -newkey rsa:2048 -nodes -sha256 -utf8 -subj "/C=DE/CN=$CN$DOMAIN" -keyout $PREFIX"$DOMAIN".key -out $PREFIX"$DOMAIN".csr
     fi
     touch "$DIRECTORY""$PREFIX""$DOMAIN".crt
-    mkdir "$DIRECTORY"old_"$DATUM"_"$KUERZEL"
+    mkdir "$DIRECTORY"old_"$DATE"_"$USER"
     echo ""
     echo ""
     cat "$DIRECTORY"*csr
