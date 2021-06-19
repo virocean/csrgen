@@ -1,21 +1,28 @@
-package csrgennetbeans;
+package csrgen;
 import java.util.Scanner;
 
-public class Csrgennetbeans {
+public class csrgen {
+ 
+        public static void main(String [] args){
+        
+        domainEingeben();
+        typeEingeben();
+        confirmInput();
+}    
 /*
 1) Reading the Name of the Domain the Cert is being made for
 */
-    String MAINFOLDER = "~/Zertifikate/";
-    String USER = "DWE";
-    String DOMAIN;
-    int TYPE;
-    String EV;
-    String PREFIX;
-    String CN;
-    String DIRECTORY;
-    Scanner read = new Scanner(System.in);
+    static String MAINFOLDER = "~/Zertifikate/";
+    static String USER = "DWE";
+    static String DOMAIN;
+    static int TYPE;
+    static String EV;
+    static String PREFIX;
+    static String CN;
+    static String DIRECTORY;
+    static Scanner read = new Scanner(System.in);
 
-    public void domainEingeben(){
+    public static void domainEingeben(){
         System.out.print("Domain: ");
         DOMAIN = read.nextLine();
 
@@ -23,13 +30,16 @@ public class Csrgennetbeans {
 /*
 2) Choosing Cert Type and confirming
 */
-    public void typeEingeben(){
-        System.out.printf("%nNow let's choose the certificate type.%nThese are the Options:%n1.) AlphaSSL%n2.) Wildcard%n3.) SAN (Mit oder ohne EV)%n4.) LetsEncrypt%n5.) GeoTrust EV");
+    public static void typeEingeben(){
+        System.out.printf("%nNow let's choose the certificate type.%nThese are the Options:%n1.) AlphaSSL%n2.) Wildcard%n3.) SAN (Mit oder ohne EV)%n4.) LetsEncrypt%n5.) GeoTrust EV%n1, 2, 3, 4 or 5?: ");
+        boolean running = true;
         TYPE = read.nextInt();
-        while(true){
+        while(running){
             switch(TYPE){
-                case 1:    //AlphaSSL
-                    continue;              
+                case 1:     //AlphaSSL
+                case 5:     //GeotrustEV                     
+                    PREFIX=("www.");      
+                    continue;
                 case 2:    //Wildcard                       
                     PREFIX=("wc.");
                     CN=("*.");
@@ -44,17 +54,19 @@ public class Csrgennetbeans {
                     System.out.println("https://service2.continum.net/services/ssl-certificates");
                     System.exit(0);
                     continue;
-                case 5:    //GeotrustEV                     
-                    PREFIX=("www.");
-                    continue;
                 default:
                     System.out.println("%nNumber not between 1 and 5.%nTry again:%n");
-            }    
+            }
+            if  (TYPE >= 1 && TYPE <= 5){
+                confirmInput();
+                break;
+                
+            }
         }
     }
-    public void confirmInput(String String) {
+    public static void confirmInput() {
 
-        System.out.printf("%nHeres your inputs:%nDomain: "+DOMAIN+"%nCert Type: "+TYPE+"%n%");
+        System.out.printf("%n%nHeres your inputs:%nDomain: "+DOMAIN+"%nCert Type: "+TYPE+"%n");
         switch(TYPE){
             case 1:
                 System.out.println("AlphaSSL");
@@ -65,11 +77,11 @@ public class Csrgennetbeans {
             case 5:
                 System.out.println("Geotrust");
         }
-        System.out.println("EV: ");
+        System.out.println("EV? yes/no: ");
             if (EV.equals("yes")){
-                System.out.printf("yes");
+                System.out.printf("yes%n");
             }else{
-                System.out.printf("no");
+                System.out.printf("no%n");
             }
         }
     }
