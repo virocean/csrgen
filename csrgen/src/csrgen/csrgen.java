@@ -31,7 +31,13 @@ public class csrgen {
 2) Choosing Cert Type and confirming
 */
     public static void typeEingeben(){
-        System.out.printf("%nNow let's choose the certificate type.%nThese are the Options:%n1.) AlphaSSL%n2.) Wildcard%n3.) SAN (Mit oder ohne EV)%n4.) LetsEncrypt%n5.) GeoTrust EV%n1, 2, 3, 4 or 5?: ");
+        System.out.printf("%nNow let's choose the certificate type."
+                + "%nThese are the Options:"
+                + "%n1.) AlphaSSL"
+                + "%n2.) Wildcard"
+                + "%n3.) SAN%n4.) LetsEncrypt"
+                + "%n5.) GeoTrust EV"
+                + "%n1, 2, 3, 4 or 5?: ");
       //  boolean running = true;
         TYPE = read.nextInt();
       //  while(running){
@@ -45,19 +51,24 @@ public class csrgen {
                     PREFIX=("wc.");
                     CN=("*.");
                     System.out.println("Extended Validation? yes/no: ");
+                    read.nextLine(); //catches the \n
                     EV = read.nextLine();
                     break;
                 case 3:     //SAN
                     PREFIX=("san.");
-                    EV = ("yes");
+                    System.out.print("Extended Validation? yes/no: ");
+                    read.nextLine(); //catches the \n
+                    EV = read.nextLine();
                     break;
                 case 4:     //LetsEncrypt
-                    System.out.printf("%nLetsEncrypt Certificates can be installed over Service2:");
-                    System.out.println("https://service2.continum.net/services/ssl-certificates");
+                    System.out.printf("%nLetsEncrypt Certificates can be installed over Service2:"
+                    + "%nhttps://service2.continum.net/services/ssl-certificates");
                     System.exit(0);
                     break;
                 default:
-                    System.out.printf("%nNumber not between 1 and 5.%nTry again: %n"); 
+                    System.out.printf("%nNumber not between 1 and 5.%n"
+                            + "Try again: "
+                            + "%n"); 
                     typeEingeben();        
             }
             System.out.printf("%n");
@@ -70,7 +81,7 @@ public class csrgen {
     
     public static void confirmInput() {
 
-        System.out.printf("%n%nHeres your inputs:%nDomain: "+DOMAIN+"%nCert Type: ");
+        System.out.printf("%n%nHeres your inputs:%nDomain:    "+DOMAIN+"%nCert Type: ");
         switch(TYPE){
             case 1:
                 System.out.println("AlphaSSL");
@@ -85,7 +96,12 @@ public class csrgen {
                 System.out.println("Geotrust");
                 break;                
         }
-        System.out.printf("%nEV: "+EV+"%n");
+        System.out.print("EV:        ");
+        if (EV.equals("yes") || TYPE == 5){
+            System.out.printf("yes%n");
+        }else{
+            System.out.printf("no%n");
+        }
      }
 }
 /*
