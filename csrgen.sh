@@ -90,7 +90,7 @@
         for DNS in ${SANDOMAINS}
         do
             (( COUNTER++ )) || true
-            echo "DNS.${COUNTER} = ${DNS}" >> openssl.conf
+            echo "DNS.${COUNTER} = ${DNS}" >> openssl.cnf
             openssl genrsa -out san."$DOMAIN".key 2048
             openssl req -new -out san."$DOMAIN".csr -key san."$DOMAIN".key -config openssl.cnf
             openssl req -text -noout -in san."$DOMAIN".csr
@@ -124,10 +124,11 @@
     #Opening the old cert file if nautilus exists
     echo ""
     echo "If its a Certrenewal the old files may be around here: "
-    FINDINGS=$(find ~/git -name *$DOMAIN*.pem*)
+    FINDINGS=$(find ~/git -name "*$DOMAIN*.pem*")
     echo "$FINDINGS"
-#If youre fancy install nautilus and uncomment this:
-    #nautilus "$FINDINGS"
+    nemo "$FINDINGS"
+    nemo "$DIRECTORY"
+    code "$DIRECTORY"
 exit
 #
 # TO-Do: Create Notes
