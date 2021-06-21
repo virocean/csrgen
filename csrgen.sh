@@ -40,6 +40,7 @@
     elif [ "${TYPE}" -eq 4 ]; then
         echo "LetsEncrypt Zertifikate werden über service2 ausgestellt: "
         echo "https://service2.continum.net/services/ssl-certificates"
+        nemo "https://service2.continum.net/services/ssl-certificates" #add asking feature
         exit
     else 
         echo "Number not betweeen 1 and 5, try again."
@@ -116,19 +117,27 @@
         openssl req -new -newkey rsa:2048 -nodes -sha256 -utf8 -subj "/C=DE/CN=$CN$DOMAIN" -keyout $PREFIX"$DOMAIN".key -out $PREFIX"$DOMAIN".csr
     fi
     touch "$DIRECTORY""$PREFIX""$DOMAIN".crt
+    touch "$DIRECTORY""$PREFIX""$DOMAIN".pem
+    touch "$DIRECTORY""$PREFIX""$DOMAIN".intermediate.crt
     mkdir "$DIRECTORY"old_"$DATE"_"$USER"
+    touch "$DIRECTORY"Notizen
+    printf "DOMAIN: ""$DOMAIN""%s\n\nTXT-Record: \n" | cat >> Notizen
+    cat "$DIRECTORY""$PREFIX""$DOMAIN".key >> "$DIRECTORY""$PREFIX""$DOMAIN".pem
     echo ""
     echo ""
     cat "$DIRECTORY"*csr
     echo ""
     #Opening the old cert file if nautilus exists
     echo ""
-    echo "If its a Certrenewal the old files may be around here: "
+    printf "\nIf its a Certrenewal the old files may be around here: "
     FINDINGS=$(find ~/git -name "*$DOMAIN*.pem*")
     echo "$FINDINGS"
-    nemo "$FINDINGS"
-    nemo "$DIRECTORY"
-    code "$DIRECTORY"
+    #nemo "$FINDINGS"
+    nemo "$DIRECTORY"     #add asking feature
+    code "$DIRECTORY"     #add asking feature
+    firefox "$DOMAIN"     #add asking feature
+    firefox https://gui.cps-datensysteme.de/group.php/sslcert/create/sslcert?step=0&
 exit
 #
 # TO-Do: Create Notes
+#        Adding ask prompt for opening everything
