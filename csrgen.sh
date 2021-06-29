@@ -126,23 +126,25 @@
     echo ""
     echo ""
     cat "$DIRECTORY"*csr
-    echo ""
-    #Opening the old cert file if nautilus exists
-    echo ""
-    printf "\nIf its a Certrenewal the old files may be around here: "
-    FINDINGS=$(find ~/git -name "*$DOMAIN*.pem*")
+    #
+    #Opening the old cert file
+    # find ~/git -name "*schuelerbefoerderung*.*"
+    printf "\n\nIf its a Certrenewal the old files may be around here: "
+    FINDINGS=$(find ~/git -name "*$DOMAIN*.*")
     echo "$FINDINGS"
-    #nemo "$FINDINGS"
+    nemo "$FINDINGS"
     nemo "$DIRECTORY"
-    printf "\n\nWant me to open the Directory in vscode and the Browser for you?\nyes / no:"
+    printf "\n\nWant me to open the Directory in vscode and the Browser for you?\nyes/no: "
     read -r ANSWER
-    if [ "${ANSWER}" == "yes"]; then
+    if [ "${ANSWER}" == "yes" ]; then
     code "$DIRECTORY"
     firefox "$DOMAIN" 
     firefox https://gui.cps-datensysteme.de/group.php/sslcert/create/sslcert?step=0&
-    elif [ "${ANSWER}" == "no"]; then
+    elif [ "${ANSWER}" == "no" ]; then
     printf "Okay, i will not open them."
-exit
+    else
+    printf "This didnt work, but you should be able to do the last steps on your own. I believe in you."
+    fi
+    exit
 #
 # TO-Do: Create Notes
-#        Adding ask prompt for opening everything
