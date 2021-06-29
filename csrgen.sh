@@ -114,7 +114,7 @@
     #   
     # Goes here if type is AlphaSSl or Wildcard (if not EV nor SAN nor Geotrust)
     else    # elif [ "${EV}" = no ]; then
-        openssl req -new -newkey rsa:2048 -nodes -sha256 -utf8 -subj "/C=DE/CN=$CN$DOMAIN" -keyout $PREFIX"$DOMAIN".key -out $PREFIX"$DOMAIN".csr
+        openssl req -new -newkey rsa:2048 -nodes -sha256 -utf8 -subj "/C=DE/CN=$CN$PREFIX$DOMAIN" -keyout $PREFIX"$DOMAIN".key -out $PREFIX"$DOMAIN".csr
     fi
     touch "$DIRECTORY""$PREFIX""$DOMAIN".crt
     touch "$DIRECTORY""$PREFIX""$DOMAIN".pem
@@ -133,10 +133,15 @@
     FINDINGS=$(find ~/git -name "*$DOMAIN*.pem*")
     echo "$FINDINGS"
     #nemo "$FINDINGS"
-    nemo "$DIRECTORY"     #add asking feature
-    code "$DIRECTORY"     #add asking feature
-    firefox "$DOMAIN"     #add asking feature
+    nemo "$DIRECTORY"
+    printf "\n\nWant me to open the Directory in vscode and the Browser for you?\nyes / no:"
+    read -r ANSWER
+    if [ "${ANSWER}" == "yes"]; then
+    code "$DIRECTORY"
+    firefox "$DOMAIN" 
     firefox https://gui.cps-datensysteme.de/group.php/sslcert/create/sslcert?step=0&
+    elif [ "${ANSWER}" == "no"]; then
+    printf "Okay, i will not open them."
 exit
 #
 # TO-Do: Create Notes
