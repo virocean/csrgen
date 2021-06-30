@@ -116,19 +116,21 @@
     else    # elif [ "${EV}" = no ]; then
         openssl req -new -newkey rsa:2048 -nodes -sha256 -utf8 -subj "/C=DE/CN=$CN$PREFIX$DOMAIN" -keyout $PREFIX"$DOMAIN".key -out $PREFIX"$DOMAIN".csr
     fi
+    #
+    #Creates all the files in the dedicated directory
     touch "$DIRECTORY""$PREFIX""$DOMAIN".crt
     touch "$DIRECTORY""$PREFIX""$DOMAIN".pem
-    touch "$DIRECTORY""$PREFIX""$DOMAIN".intermediate.crt
+    touch "$DIRECTORY""$PREFIX""$DOMAIN".int
     mkdir "$DIRECTORY"old_"$DATE"_"$USER"
     touch "$DIRECTORY"Notizen
-    printf "DOMAIN: ""$DOMAIN""%s\n\nTXT-Record: \n" | cat >> Notizen
+    printf "DOMAIN: ""$DOMAIN""%s\n\nopenssl rsa -noout -modulus -in *$DOMAIN.key | openssl md5; \\nopenssl x509 -noout -modulus -in *$DOMAIN.crt | openssl md5; \\nopenssl req -noout -modulus -in *$DOMAIN.csr | openssl md5\n\nTXT-Record: \nHallo, der Serviceauftrag wurde erledigt.\n@BO Hier sind die zugehörigen SSL-Zertifikatsdaten für $DOMAIN\n\nDomain:         $DOMAIN\nErstellt:	     \nExpire:			\nType:           \nApprover-Type:	   \n\n" | cat >> Notizen
     cat "$DIRECTORY""$PREFIX""$DOMAIN".key >> "$DIRECTORY""$PREFIX""$DOMAIN".pem
-    echo ""
-    echo ""
+    printf "\n\n"
     cat "$DIRECTORY"*csr
+    printf "\n\n"
+    dig ns "$DOMAIN"
     #
     #Opening the old cert file
-    # find ~/git -name "*schuelerbefoerderung*.*"
     printf "\n\nIf its a Certrenewal the old files may be around here: "
     FINDINGS=$(find ~/git -name "*$DOMAIN*.*")
     echo "$FINDINGS"
@@ -138,7 +140,8 @@
     read -r ANSWER
     if [ "${ANSWER}" == "yes" ]; then
     code "$DIRECTORY"
-    firefox "$DOMAIN" 
+    firefox "$DOMAIN"
+    firefox "service2.continum.net/services/dns/" 
     firefox https://gui.cps-datensysteme.de/group.php/sslcert/create/sslcert?step=0&
     elif [ "${ANSWER}" == "no" ]; then
     printf "Okay, i will not open them."
@@ -147,4 +150,5 @@
     fi
     exit
 #
-# TO-Do: Create Notes
+# TO-Do: Create Prefixcatch for subdomains
+#
