@@ -1,6 +1,6 @@
 #!/bin/bash
-# 
-    FOLDER=~/Zertifikate/ #The .csr&.key files will be created here 
+#
+    FOLDER=~/Zertifikate/ #The .csr&.key files will be created here
     USER=DWE           #Important for the "old_" Folder       
     echo "##WELCOME TO CSRGen##"
     echo ""
@@ -8,31 +8,37 @@
 # 1) Reading the Name of the Domain the Cert is being made for
 #
     echo "First name the Domain you want to create a csr for."
+    echo "Is the csr for a subdomain except www? (For example cloud.domain.de)"
+    echo -n "yes/no: "
+    read -r subdomain
     echo "If its a SAN Certificate, just enter the name of the main domain."
     echo "Format: domain.de"
     echo -n "Domain: "
     read -r DOMAIN
     echo ""
-# 
+#
 # 2) Choosing Cert Type and confirming
 #
     echo "Now let's choose the certificate type."
     echo "These are the Options:"
-    echo    "1.) AlphaSSL"      
-    echo    "2.) Wildcard"      
-    echo    "3.) SAN (Mit oder ohne EV)"           
+    echo    "1.) AlphaSSL"
+    echo    "2.) Wildcard"
+    echo    "3.) SAN (Mit oder ohne EV)"
     echo    "4.) LetsEncrypt"
     echo    "5.) GeoTrust EV"
     echo -n "1, 2 ,3, 4 or 5?: "
     read -r TYPE
     #
     if [ "${TYPE}" -eq 1 ] || [ "${TYPE}" -eq 5 ]; then
+        if ["{SUBDOMAIN} == "yes"]; then
+        PREFIX=""
+	else
         PREFIX="www."
     elif [ "${TYPE}" -eq 2 ]; then
         PREFIX="wc."
         CN="*."
-    #Now choosing if its an EV or not   
-        echo "Is it an Certificate with Extended Validation (EV)?"
+    #Now choosing if its an EV or not
+        print "Is it an Certificate with Extended Validation (EV)?"
         echo -n "yes/no: "
         read -r EV
     elif [ "${TYPE}" -eq 3 ]; then
