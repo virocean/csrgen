@@ -37,15 +37,15 @@
     if [ "${TYPE}" -eq 1 ] || [ "${TYPE}" -eq 5 ]; 
         then
             if [ "${SUBDOMAIN}" == "yes" ]; then
-            PREFIX=""
+                PREFIX=""
 	        else
-            PREFIX="www."
+                PREFIX="www."
             fi
     elif [ "${TYPE}" -eq 2 ]; then
         PREFIX="wc."
         CN="*."
     #Now choosing if its an EV or not
-        print "Is it an Certificate with Extended Validation (EV)?\n"
+        printf "Is it an Certificate with Extended Validation (EV)?\n"
         printf "yes/no: "
         read -r EV
     elif [ "${TYPE}" -eq 3 ]; then
@@ -61,8 +61,8 @@
     fi
     #
     printf "\nHeres your inputs:\n"
-    printf "Domain:     %s$DOMAIN"
-    printf "\nCert Type: \n"
+    printf "  Domain:    %s$DOMAIN"
+    printf "\n  Cert Type: "
         if [ "${TYPE}" -eq 1 ]; then
             printf "AlphaSSL\n"
         elif [ "${TYPE}" -eq 2 ]; then
@@ -72,11 +72,11 @@
         elif [ "${TYPE}" -eq 5 ]; then
             printf "Geotrust\n"
         fi
-    printf "EV:        "
+    printf "  EV:        "
         if [ "${EV}" = yes ] || [ "${TYPE}" -eq 5 ]; then
-            printf "Yes"
+            printf "Yes\n"
         else 
-            printf "No"
+            printf "No\n"
         fi
     printf ""
 #
@@ -87,16 +87,16 @@
     mkdir "$DIRECTORY"
     cd "$DIRECTORY" || return
     if [ "${TYPE}" -eq 3 ]; then
-        printf "\nLand: (Bsp: DE) "
-        read -r LAND
-        printf "\nBundesland: "
-        read -r BUNDESLAND
-        printf "\nStadt: "
-        read -r STADT
-        printf "\nFirmenname: "
-        read -r FIRMENNAME
-        printf "\nAbteilungsname: "
-        read -r ABTEILUNGSNAME
+     #   printf "Land: (Bsp: DE) "
+     #   read -r LAND
+     #   printf "Bundesland:     "
+     #   read -r BUNDESLAND
+     #   printf "Stadt:          "
+     #   read -r STADT
+     #   printf "Firmenname:     "
+     #   read -r FIRMENNAME
+     #   printf "Abteilungsname: "
+     #   read -r ABTEILUNGSNAME
         printf "[req]\ndistinguished_name = req_distinguished_name\nreq_extensions = v3_req\nprompt = no\n[req_distinguished_name]\nC = %s\nST = %s\nL = %s\nO = %s\nOU = %s\nCN = %s\n[v3_req]\nkeyUsage = keyEncipherment, dataEncipherment\nextendedKeyUsage = serverAuth\nsubjectAltName = @alt_names\n[alt_names]\n" "${LAND}" "${BUNDESLAND}" "${STADT}" "${FIRMENNAME}" "${ABTEILUNGSNAME}"  "${DOMAIN}" >> openssl.conf
         printf "\nWeitere Domainnamen getrennt mit einem Leerzeichen: "
         read -r SANDOMAINS
