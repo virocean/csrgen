@@ -2,76 +2,83 @@
 #
     FOLDER=~/Zertifikate/ #The .csr&.key files will be created here
     USER=DWE           #Important for the "old_" Folder       
-    echo "##WELCOME TO CSRGen##"
-    echo ""
+    printf "\n##WELCOME TO CSRGen##\n\n\n"
 #
 # 1) Reading the Name of the Domain the Cert is being made for
 #
-    echo "First name the Domain you want to create a csr for."
-    echo "Is the csr for a subdomain except www? (For example cloud.domain.de)"
-    echo -n "yes/no: "
-    read -r subdomain
-    echo "If its a SAN Certificate, just enter the name of the main domain."
-    echo "Format: domain.de"
-    echo -n "Domain: "
+    printf "1) Name the Domain you want to create a csr for:\n"
+    printf "\nIf its a SAN Certificate, just enter the name of the main domain."
+    printf "\nIs the csr for a subdomain except www? (For example cloud.domain.de)"
+    printf "\nyes/no: "
+    read -r SUBDOMAIN
+    if [ "${SUBDOMAIN}" == "yes" ]; then
+        printf "\nFormat: subdomain.domain.de"
+    elif [ "${SUBDOMAIN}" == "no" ]; then
+        printf "\nFormat: domain.de"
+    else 
+        printf "You have to type \"yes\" or \"no\" \nexiting.."
+        exit
+    fi
+    printf "\nDomain: "
     read -r DOMAIN
-    echo ""
 #
 # 2) Choosing Cert Type and confirming
 #
-    echo "Now let's choose the certificate type."
-    echo "These are the Options:"
-    echo    "1.) AlphaSSL"
-    echo    "2.) Wildcard"
-    echo    "3.) SAN (Mit oder ohne EV)"
-    echo    "4.) LetsEncrypt"
-    echo    "5.) GeoTrust EV"
-    echo -n "1, 2 ,3, 4 or 5?: "
+    printf "\n\n2) Choose the certificate type.\n"
+    printf "These are the Options:\n"
+    printf    "1.) AlphaSSL\n"
+    printf    "2.) Wildcard\n"
+    printf    "3.) SAN (Mit oder ohne EV)\n"
+    printf    "4.) LetsEncrypt\n"
+    printf    "5.) GeoTrust EV\n"
+    printf "\n1, 2 ,3, 4 or 5?: "
     read -r TYPE
     #
-    if [ "${TYPE}" -eq 1 ] || [ "${TYPE}" -eq 5 ]; then
-        if ["{SUBDOMAIN} == "yes"]; then
-        PREFIX=""
-	else
-        PREFIX="www."
+    if [ "${TYPE}" -eq 1 ] || [ "${TYPE}" -eq 5 ]; 
+        then
+            if [ "${SUBDOMAIN}" == "yes" ]; then
+            PREFIX=""
+	        else
+            PREFIX="www."
+            fi
     elif [ "${TYPE}" -eq 2 ]; then
         PREFIX="wc."
         CN="*."
     #Now choosing if its an EV or not
-        print "Is it an Certificate with Extended Validation (EV)?"
-        echo -n "yes/no: "
+        print "Is it an Certificate with Extended Validation (EV)?\n"
+        printf "yes/no: "
         read -r EV
     elif [ "${TYPE}" -eq 3 ]; then
         PREFIX="san."
     elif [ "${TYPE}" -eq 4 ]; then
-        echo "LetsEncrypt Zertifikate werden über service2 ausgestellt: "
-        echo "https://service2.continum.net/services/ssl-certificates"
-        nemo "https://service2.continum.net/services/ssl-certificates" #add asking feature
+        printf "LetsEncrypt Zertifikate werden über service2 ausgestellt: \n"
+        printf "https://service2.continum.net/services/ssl-certificates\n"
+        nemo "https://service2.continum.net/services/ssl-certificates\n" #add asking feature
         exit
     else 
-        echo "Number not betweeen 1 and 5, try again."
+        printf "Number not betweeen 1 and 5, try again.\n  exiting.."
+        exit
     fi
     #
-    echo ""
-    echo "Heres your inputs:"
-    echo "Domain:    ""$DOMAIN"
-    echo -n "Cert Type: "
+    printf "\nHeres your inputs:\n"
+    printf "Domain:     %s$DOMAIN"
+    printf "\nCert Type: \n"
         if [ "${TYPE}" -eq 1 ]; then
-            echo "AlphaSSL"
+            printf "AlphaSSL\n"
         elif [ "${TYPE}" -eq 2 ]; then
-            echo "Wildcard"
+            printf "Wildcard\n"
         elif [ "${TYPE}" -eq 3 ]; then
-            echo "SAN"
+            printf "SAN\n"
         elif [ "${TYPE}" -eq 5 ]; then
-            echo "Geotrust"
+            printf "Geotrust\n"
         fi
-    echo -n "EV:        "
+    printf "EV:        "
         if [ "${EV}" = yes ] || [ "${TYPE}" -eq 5 ]; then
-            echo "Yes"
+            printf "Yes"
         else 
-            echo "No"
+            printf "No"
         fi
-    echo ""
+    printf ""
 #
 # 3) Creating dedicated Folder an executing the keygen-commands in it
 #
@@ -80,24 +87,24 @@
     mkdir "$DIRECTORY"
     cd "$DIRECTORY" || return
     if [ "${TYPE}" -eq 3 ]; then
-        echo -n "Land: (Bsp: DE) "
+        printf "\nLand: (Bsp: DE) "
         read -r LAND
-        echo -n "Bundesland: "
+        printf "\nBundesland: "
         read -r BUNDESLAND
-        echo -n "Stadt: "
+        printf "\nStadt: "
         read -r STADT
-        echo -n "Firmenname: "
+        printf "\nFirmenname: "
         read -r FIRMENNAME
-        echo -n "Abteilungsname: "
+        printf "\nAbteilungsname: "
         read -r ABTEILUNGSNAME
         printf "[req]\ndistinguished_name = req_distinguished_name\nreq_extensions = v3_req\nprompt = no\n[req_distinguished_name]\nC = %s\nST = %s\nL = %s\nO = %s\nOU = %s\nCN = %s\n[v3_req]\nkeyUsage = keyEncipherment, dataEncipherment\nextendedKeyUsage = serverAuth\nsubjectAltName = @alt_names\n[alt_names]\n" "${LAND}" "${BUNDESLAND}" "${STADT}" "${FIRMENNAME}" "${ABTEILUNGSNAME}"  "${DOMAIN}" >> openssl.conf
-        echo -n "Weitere Domainnamen getrennt mit einem Leerzeichen: "
+        printf "\nWeitere Domainnamen getrennt mit einem Leerzeichen: "
         read -r SANDOMAINS
         COUNTER=0
         for DNS in ${SANDOMAINS}
         do
             (( COUNTER++ )) || true
-            echo "DNS.${COUNTER} = ${DNS}" >> openssl.cnf
+            printf "DNS.%s${COUNTER} = %s${DNS}" >> openssl.cnf
             openssl genrsa -out san."$DOMAIN".key 2048
             openssl req -new -out san."$DOMAIN".csr -key san."$DOMAIN".key -config openssl.cnf
             openssl req -text -noout -in san."$DOMAIN".csr
@@ -106,15 +113,15 @@
     # Goes here if its an "EV" or Type 5(Geotrust), asks for Parameters
     # and then gernerates csr & key with the last Command 
     elif [ "${EV}" = yes ] || [ "${TYPE}" -eq 5 ]; then
-        echo -n "Land: (Bsp: DE) "
+        printf "\nLand: (Bsp: DE) "
         read -r LAND
-        echo -n "Bundesland: "
+        printf "\nBundesland: "
         read -r BUNDESLAND
-        echo -n "Stadt: "
+        printf "\nStadt: "
         read -r STADT
-        echo -n "Firmenname: "
+        printf "\nFirmenname: "
         read -r FIRMENNAME
-        echo -n "Abteilungsname: "
+        printf "\nAbteilungsname: "
         read -r ABTEILUNGSNAME
         openssl req -new -newkey rsa:2048 -nodes -sha256 -utf8 -subj "/C=${LAND}/ST=${BUNDESLAND}/L=${STADT}/O=${FIRMENNAME}/OU=${ABTEILUNGSNAME}/CN=${PREFIX}${DOMAIN}" -keyout  $PREFIX"$DOMAIN".key -out $PREFIX"$DOMAIN".csr
     #   
@@ -139,7 +146,7 @@
     #Opening the old cert file
     printf "\n\nIf its a Certrenewal the old files may be around here: "
     FINDINGS=$(find ~/git -name "*$DOMAIN*.*")
-    echo "$FINDINGS"
+    printf "%s$FINDINGS"
     nemo "$FINDINGS"
     nemo "$DIRECTORY"
     printf "\n\nWant me to open the Directory in vscode and the Browser for you?\nyes/no: "
