@@ -14,7 +14,7 @@
     if [ "${SUBDOMAIN}" == "yes" ]; then
         printf "\nFormat: subdomain.domain.de"
     elif [ "${SUBDOMAIN}" == "no" ]; then
-        printf "\nFormat: domain.de"
+        printf "\nFormat: (NOT www.)domain.de"
     else 
         printf "You have to type \"yes\" or \"no\" \nexiting.."
         exit
@@ -87,17 +87,17 @@
     mkdir "$DIRECTORY"
     cd "$DIRECTORY" || return
     if [ "${TYPE}" -eq 3 ]; then
-     #   printf "Land: (Bsp: DE) "
-     #   read -r LAND
-     #   printf "Bundesland:     "
-     #   read -r BUNDESLAND
-     #   printf "Stadt:          "
-     #   read -r STADT
-     #   printf "Firmenname:     "
-     #   read -r FIRMENNAME
-     #   printf "Abteilungsname: "
-     #   read -r ABTEILUNGSNAME
-        printf "[req]\ndistinguished_name = req_distinguished_name\nreq_extensions = v3_req\nprompt = no\n[req_distinguished_name]\nC = %s\nST = %s\nL = %s\nO = %s\nOU = %s\nCN = %s\n[v3_req]\nkeyUsage = keyEncipherment, dataEncipherment\nextendedKeyUsage = serverAuth\nsubjectAltName = @alt_names\n[alt_names]\n" "${LAND}" "${BUNDESLAND}" "${STADT}" "${FIRMENNAME}" "${ABTEILUNGSNAME}"  "${DOMAIN}" >> openssl.conf
+        printf "Land: (Bsp: DE) "
+        read -r LAND
+        printf "Bundesland:     "
+        read -r BUNDESLAND
+        printf "Stadt:          "
+        read -r STADT
+        printf "Firmenname:     "
+        read -r FIRMENNAME
+        printf "Abteilungsname: "
+        read -r ABTEILUNGSNAME
+        printf "[req]\ndistinguished_name = req_distinguished_name\nreq_extensions = v3_req\nprompt = no\n[req_distinguished_name]\nC = %s\nST = %s\nL = %s\nO = %s\nOU = %s\nCN = %s\n[v3_req]\nkeyUsage = keyEncipherment, dataEncipherment\nextendedKeyUsage = serverAuth\nsubjectAltName = @alt_names\n[alt_names]\n" "${LAND}" "${BUNDESLAND}" "${STADT}" "${FIRMENNAME}" "${ABTEILUNGSNAME}" "${DOMAIN}" >> openssl.conf
         printf "\nWeitere Domainnamen getrennt mit einem Leerzeichen: "
         read -r SANDOMAINS
         COUNTER=0
@@ -127,7 +127,7 @@
     #   
     # Goes here if type is AlphaSSl or Wildcard (if not EV nor SAN nor Geotrust)
     else    # elif [ "${EV}" = no ]; then
-        openssl req -new -newkey rsa:2048 -nodes -sha256 -utf8 -subj "/C=DE/CN=$CN$PREFIX$DOMAIN" -keyout $PREFIX"$DOMAIN".key -out $PREFIX"$DOMAIN".csr
+        openssl req -new -newkey rsa:2048 -nodes -sha256 -utf8 -subj "/C=DE/CN=$CN$DOMAIN" -keyout $PREFIX"$DOMAIN".key -out $PREFIX"$DOMAIN".csr
     fi
     #
     #Creates all the files in the dedicated directory
@@ -136,7 +136,7 @@
     touch "$DIRECTORY""$PREFIX""$DOMAIN".int
     mkdir "$DIRECTORY"old_"$DATE"_"$USER"
     touch "$DIRECTORY"Notizen
-    printf "DOMAIN: ""$DOMAIN""%s\n\nopenssl rsa -noout -modulus -in *$DOMAIN.key | openssl md5; \\nopenssl x509 -noout -modulus -in *$DOMAIN.crt | openssl md5; \\nopenssl req -noout -modulus -in *$DOMAIN.csr | openssl md5\n\nTXT-Record: \nHallo, der Serviceauftrag wurde erledigt.\n@BO Hier sind die zugehörigen SSL-Zertifikatsdaten für $DOMAIN\n\nDomain:         $DOMAIN\nErstellt:	     \nExpire:			\nType:           \nApprover-Type:	   \n\n" | cat >> Notizen
+    printf "Domain: ""$DOMAIN""%s\n\nopenssl rsa -noout -modulus -in *$DOMAIN.key | openssl md5; \\nopenssl x509 -noout -modulus -in *$DOMAIN.crt | openssl md5; \\nopenssl req -noout -modulus -in *$DOMAIN.csr | openssl md5\n\nTXT-Record: \nHallo, der Serviceauftrag wurde erledigt.\n@BO Hier sind die zugehörigen SSL-Zertifikatsdaten für $DOMAIN\n\nDomain:         $DOMAIN\nErstellt:	     \nExpire:			\nType:           \nApprover-Type:	   \n\n" | cat >> Notizen
     cat "$DIRECTORY""$PREFIX""$DOMAIN".key >> "$DIRECTORY""$PREFIX""$DOMAIN".pem
     printf "\n\n"
     cat "$DIRECTORY"*csr
@@ -147,19 +147,19 @@
     printf "\n\nIf its a Certrenewal the old files may be around here: "
     FINDINGS=$(find ~/git -name "*$DOMAIN*.*")
     printf "%s$FINDINGS"
-    nemo "$FINDINGS"
-    nemo "$DIRECTORY"
     printf "\n\nWant me to open the Directory in vscode and the Browser for you?\nyes/no: "
     read -r ANSWER
     if [ "${ANSWER}" == "yes" ]; then
+    nemo "$FINDINGS"
+    nemo "$DIRECTORY"
     code "$DIRECTORY"
     firefox "$DOMAIN"
     firefox "service2.continum.net/services/dns/" 
     firefox https://gui.cps-datensysteme.de/group.php/sslcert/create/sslcert?step=0&
     elif [ "${ANSWER}" == "no" ]; then
-    printf "Okay, i will not open them."
+    printf "Okay, i will not open them.\n\n"
     else
-    printf "This didnt work, but you should be able to do the last steps on your own. I believe in you."
+    printf "This didnt work, but you should be able to do the last steps on your own. I believe in you.\n\n"
     fi
     exit
 #
