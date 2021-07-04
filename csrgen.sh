@@ -38,7 +38,7 @@
         then
             if [ "${SUBDOMAIN}" == "yes" ]; then
                 PREFIX=""
-	        else
+	    else
                 PREFIX="www."
             fi
     elif [ "${TYPE}" -eq 2 ]; then
@@ -51,10 +51,17 @@
     elif [ "${TYPE}" -eq 3 ]; then
         PREFIX="san."
     elif [ "${TYPE}" -eq 4 ]; then
-        printf "LetsEncrypt Zertifikate werden über service2 ausgestellt: \n"
-        printf "https://service2.continum.net/services/ssl-certificates\n"
-        nemo "https://service2.continum.net/services/ssl-certificates\n" #add asking feature
-        exit
+        printf "\n\nYou can order LetsEncrypt Certificates via Service2"
+	printf "\nWant me to open firefox for you?\nyes/no: "
+	read -r OPENBROWSER
+	if [ "${OPENBROWSER}" = yes ]; then
+        	firefox "https://service2.continum.net/services/ssl-certificates\n\n"
+	elif [ "${OPENBROWSER}" = no ]; then
+        	printf "Alright, heres the Link:\nhttps://service2.continum.net/services/ssl-certificates\n\nBye!"
+	else
+		printf "You have to type "yes" or "no". \nAnyways.. heres the Link; \nhttps://service2.continum.net/services/ssl-certificates\n\nBye!"		
+	exit
+	fi
     else 
         printf "Number not betweeen 1 and 5, try again.\n  exiting.."
         exit
@@ -87,7 +94,7 @@
     mkdir "$DIRECTORY"
     cd "$DIRECTORY" || return
     if [ "${TYPE}" -eq 3 ]; then
-        printf "Land: (Bsp: DE) "
+        printf "\nLand: (Bsp: DE) "
         read -r LAND
         printf "Bundesland:     "
         read -r BUNDESLAND
@@ -97,7 +104,7 @@
         read -r FIRMENNAME
         printf "Abteilungsname: "
         read -r ABTEILUNGSNAME
-        printf "[req]\ndistinguished_name = req_distinguished_name\nreq_extensions = v3_req\nprompt = no\n[req_distinguished_name]\nC = %s\nST = %s\nL = %s\nO = %s\nOU = %s\nCN = %s\n[v3_req]\nkeyUsage = keyEncipherment, dataEncipherment\nextendedKeyUsage = serverAuth\nsubjectAltName = @alt_names\n[alt_names]\n" "${LAND}" "${BUNDESLAND}" "${STADT}" "${FIRMENNAME}" "${ABTEILUNGSNAME}" "${DOMAIN}" >> openssl.conf
+        printf "[req]\ndistinguished_name = req_distinguished_name\nreq_extensions = v3_req\nprompt = no\n[req_distinguished_name]\nC = %s\nST = %s\nL = %s\nO = %s\nOU = %s\nCN = %s\n[v3_req]\nkeyUsage = keyEncipherment, dataEncipherment\nextendedKeyUsage = serverAuth\nsubjectAltName = @alt_names\n[alt_names]\n" "${LAND}" "${BUNDESLAND}" "${STADT}" "${FIRMENNAME}" "${ABTEILUNGSNAME}" "${DOMAIN}" >> openssl.cnf
         printf "\nWeitere Domainnamen getrennt mit einem Leerzeichen: "
         read -r SANDOMAINS
         COUNTER=0
@@ -140,7 +147,7 @@
     cat "$DIRECTORY""$PREFIX""$DOMAIN".key >> "$DIRECTORY""$PREFIX""$DOMAIN".pem
     printf "\n\n"
     cat "$DIRECTORY"*csr
-    printf "\n\n"
+    printf "\n\n##Heres the dig ns:\n "
     dig ns "$DOMAIN"
     #
     #Opening the old cert file
@@ -150,16 +157,16 @@
     printf "\n\nWant me to open the Directory in vscode and the Browser for you?\nyes/no: "
     read -r ANSWER
     if [ "${ANSWER}" == "yes" ]; then
-    nemo "$FINDINGS"
-    nemo "$DIRECTORY"
-    code "$DIRECTORY"
-    firefox "$DOMAIN"
-    firefox "service2.continum.net/services/dns/" 
-    firefox https://gui.cps-datensysteme.de/group.php/sslcert/create/sslcert?step=0&
+    	nemo "$FINDINGS"
+    	nemo "$DIRECTORY"
+    	code "$DIRECTORY"
+   	firefox "$DOMAIN"
+    	firefox "service2.continum.net/services/dns/" 
+    	firefox https://gui.cps-datensysteme.de/group.php/sslcert/create/sslcert?step=0&
     elif [ "${ANSWER}" == "no" ]; then
-    printf "Okay, i will not open them.\n\n"
+    	printf "Okay, i will not open them.\n\n"
     else
-    printf "This didnt work, but you should be able to do the last steps on your own. I believe in you.\n\n"
+    	printf "This didnt work, but you should be able to do the last steps on your own. I believe in you.\n\n"
     fi
     exit
 #
