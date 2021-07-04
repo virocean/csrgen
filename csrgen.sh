@@ -28,7 +28,7 @@
     printf "These are the Options:\n"
     printf    "1.) AlphaSSL\n"
     printf    "2.) Wildcard\n"
-    printf    "3.) SAN (Mit oder ohne EV)\n"
+    printf    "3.) SAN\n"
     printf    "4.) LetsEncrypt\n"
     printf    "5.) GeoTrust EV\n"
     printf "\n1, 2 ,3, 4 or 5?: "
@@ -71,8 +71,8 @@
     fi
     #
     printf "\nHeres your inputs:\n"
-    printf "  Domain:    %s$DOMAIN"
-    printf "\n  Cert Type: "
+    printf "  Domain:       %s$DOMAIN"
+    printf "\n  Cert Type:    "
         if [ "${TYPE}" -eq 1 ]; then
             printf "AlphaSSL\n"
         elif [ "${TYPE}" -eq 2 ]; then
@@ -82,7 +82,7 @@
         elif [ "${TYPE}" -eq 5 ]; then
             printf "Geotrust\n"
         fi
-    printf "  EV:        "
+    printf "  EV:           "
         if [ "${EV}" = yes ] || [ "${TYPE}" -eq 5 ]; then
             printf "Yes\n"
         else 
@@ -125,13 +125,13 @@
     elif [ "${EV}" = yes ] || [ "${TYPE}" -eq 5 ]; then
         printf "\nLand: (Bsp: DE) "
         read -r LAND
-        printf "\nBundesland:     "
+        printf "Bundesland:     "
         read -r BUNDESLAND
-        printf "\nStadt:          "
+        printf "Stadt:          "
         read -r STADT
-        printf "\nFirmenname:     "
+        printf "Firmenname:     "
         read -r FIRMENNAME
-        printf "\nAbteilungsname: "
+        printf "Abteilungsname: "
         read -r ABTEILUNGSNAME
         openssl req -new -newkey rsa:2048 -nodes -sha256 -utf8 -subj "/C=${LAND}/ST=${BUNDESLAND}/L=${STADT}/O=${FIRMENNAME}/OU=${ABTEILUNGSNAME}/CN=$PREFIX${DOMAIN}" -keyout  $PREFIX"$DOMAIN".key -out $PREFIX"$DOMAIN".csr
     #   
@@ -173,5 +173,5 @@
     fi
     exit
 #
-# TO-Do: Create Prefixcatch for subdomains
+# TO-Do: Switch Step 1 & 2
 #
