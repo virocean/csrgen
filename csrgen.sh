@@ -40,6 +40,7 @@
                 PREFIX=""
 	    else
                 PREFIX="www."
+		CN="www."
             fi
     elif [ "${TYPE}" -eq 2 ]; then
         PREFIX="wc."
@@ -56,8 +57,10 @@
 	read -r OPENBROWSER
 	if [ "${OPENBROWSER}" = yes ]; then
         	firefox "https://service2.continum.net/services/ssl-certificates\n\n"
+	exit
 	elif [ "${OPENBROWSER}" = no ]; then
         	printf "Alright, heres the Link:\nhttps://service2.continum.net/services/ssl-certificates\n\nBye!"
+	exit
 	else
 		printf "You have to type "yes" or "no". \nAnyways.. heres the Link; \nhttps://service2.continum.net/services/ssl-certificates\n\nBye!"		
 	exit
@@ -122,15 +125,15 @@
     elif [ "${EV}" = yes ] || [ "${TYPE}" -eq 5 ]; then
         printf "\nLand: (Bsp: DE) "
         read -r LAND
-        printf "\nBundesland: "
+        printf "\nBundesland:     "
         read -r BUNDESLAND
-        printf "\nStadt: "
+        printf "\nStadt:          "
         read -r STADT
-        printf "\nFirmenname: "
+        printf "\nFirmenname:     "
         read -r FIRMENNAME
         printf "\nAbteilungsname: "
         read -r ABTEILUNGSNAME
-        openssl req -new -newkey rsa:2048 -nodes -sha256 -utf8 -subj "/C=${LAND}/ST=${BUNDESLAND}/L=${STADT}/O=${FIRMENNAME}/OU=${ABTEILUNGSNAME}/CN=${PREFIX}${DOMAIN}" -keyout  $PREFIX"$DOMAIN".key -out $PREFIX"$DOMAIN".csr
+        openssl req -new -newkey rsa:2048 -nodes -sha256 -utf8 -subj "/C=${LAND}/ST=${BUNDESLAND}/L=${STADT}/O=${FIRMENNAME}/OU=${ABTEILUNGSNAME}/CN=$PREFIX${DOMAIN}" -keyout  $PREFIX"$DOMAIN".key -out $PREFIX"$DOMAIN".csr
     #   
     # Goes here if type is AlphaSSl or Wildcard (if not EV nor SAN nor Geotrust)
     else    # elif [ "${EV}" = no ]; then
