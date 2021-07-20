@@ -38,9 +38,9 @@
         then
             if [ "${SUBDOMAIN}" == "yes" ]; then
                 PREFIX=""
-	    else
+	        else
                 PREFIX="www."
-		CN="www."
+		        CN="www."
             fi
     elif [ "${TYPE}" -eq 2 ]; then
         PREFIX="wc."
@@ -146,7 +146,17 @@
     touch "$DIRECTORY""$PREFIX""$DOMAIN".int
     mkdir "$DIRECTORY"old_"$DATE"_"$USER"
     touch "$DIRECTORY"Notizen
-    printf "Domain: ""$DOMAIN""%s\n\nopenssl rsa -noout -modulus -in *$DOMAIN.key | openssl md5; \\nopenssl x509 -noout -modulus -in *$DOMAIN.crt | openssl md5; \\nopenssl req -noout -modulus -in *$DOMAIN.csr | openssl md5\n\nTXT-Record: \nHallo, der Serviceauftrag wurde erledigt.\n@BO Hier sind die zugehörigen SSL-Zertifikatsdaten für $DOMAIN\n\nDomain:         $DOMAIN\nErstellt:	     \nExpire:			\nType:           \nApprover-Type:	   \n\n" | cat >> Notizen
+        #This is so the right Type is being added in the notes
+        if [ "${TYPE}" -eq 1 ]; then
+        TYPEWRITTEN="AlphaSSL"
+        elif [ "${TYPE}" -eq 2 ]; then
+        TYPEWRITTEN="Wildcard"
+        elif [ "${TYPE}" -eq 3 ]; then
+        TYPEWRITTEN="SAN"
+        elif [ "${TYPE}" -eq 5 ]; then
+        TYPEWRITTEN="Geotrust EV"
+        fi
+    printf "Domain: ""$DOMAIN""%s\n\nopenssl rsa -noout -modulus -in *$DOMAIN.key | openssl md5; \\nopenssl x509 -noout -modulus -in *$DOMAIN.crt | openssl md5; \\nopenssl req -noout -modulus -in *$DOMAIN.csr | openssl md5\n\nTXT-Record: \n\n\nHallo, der Serviceauftrag wurde erledigt.\n\n@BO Hier sind die zugehörigen SSL-Zertifikatsdaten für $CN$DOMAIN\n\n\tDomain:\t\t$DOMAIN\n\tErstellt:\t\t\n\tExpire:\t\t\n\tType:\t\t${TYPEWRITTEN}\n\tApprover-Type:\t\n\tObjectID:\t\t\n\nViele Grüße\nDavid Wendl" | cat >> Notizen
     cat "$DIRECTORY""$PREFIX""$DOMAIN".key >> "$DIRECTORY""$PREFIX""$DOMAIN".pem
     printf "\n\n"
     cat "$DIRECTORY"*csr
