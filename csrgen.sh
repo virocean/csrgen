@@ -1,7 +1,7 @@
 #!/bin/bash
 #
     FOLDER=~/Zertifikate/ #The .csr&.key files will be created here
-    USER=DWE           #Important for the "old_" Folder       
+    USER=DWE              #Important for the "old_" Folder
     printf "\n##WELCOME TO CSRGen##\n\n\n"
 #
 # 1) Reading the Name of the Domain the Cert is being made for
@@ -11,11 +11,11 @@
     printf "\nIs the csr for a subdomain except www? (For example cloud.domain.de)"
     printf "\nyes/no: "
     read -r SUBDOMAIN
-    if [ "${SUBDOMAIN}" == "yes" ]; then
+    if [ "${SUBDOMAIN}" == "yes" ] || [ "${SUBDOMAIN}" == "y" ]; then
         printf "\nFormat: subdomain.domain.de"
-    elif [ "${SUBDOMAIN}" == "no" ]; then
+    elif [ "${SUBDOMAIN}" == "no" ] || [ "${SUBDOMAIN}" == "no" ]; then
         printf "\nFormat: (NOT www.)domain.de"
-    else 
+    else
         printf "You have to type \"yes\" or \"no\" \nexiting.."
         exit
     fi
@@ -34,9 +34,9 @@
     printf "\n1, 2 ,3, 4 or 5?: "
     read -r TYPE
     #
-    if [ "${TYPE}" -eq 1 ] || [ "${TYPE}" -eq 5 ]; 
+    if [ "${TYPE}" -eq 1 ] || [ "${TYPE}" -eq 5 ];
         then
-            if [ "${SUBDOMAIN}" == "yes" ]; then
+            if [ "${SUBDOMAIN}" == "yes" ] || [ "${SUBDOMAIN}" == "y" ]; then
                 PREFIX=""
 	        else
                 PREFIX="www."
@@ -55,17 +55,17 @@
         printf "\n\nYou can order LetsEncrypt Certificates via Service2"
 	printf "\nWant me to open firefox for you?\nyes/no: "
 	read -r OPENBROWSER
-	if [ "${OPENBROWSER}" = yes ]; then
+	if [ "${OPENBROWSER}" = "yes" ] || [ "${OPENBROWSER}" = "y" ]; then
         	firefox "https://service2.continum.net/services/ssl-certificates\n\n"
 	exit
-	elif [ "${OPENBROWSER}" = no ]; then
+	elif [ "${OPENBROWSER}" = "no" ] || [ "${OPENBROWSER}" = "n" ]; then
         	printf "Alright, heres the Link:\nhttps://service2.continum.net/services/ssl-certificates\n\nBye!"
 	exit
 	else
-		printf "You have to type "yes" or "no". \nAnyways.. heres the Link; \nhttps://service2.continum.net/services/ssl-certificates\n\nBye!"		
+		printf "You have to type "yes" or "no". \nAnyways.. heres the Link; \nhttps://service2.continum.net/services/ssl-certificates\n\nBye!"
 	exit
 	fi
-    else 
+    else
         printf "Number not betweeen 1 and 5, try again.\n  exiting.."
         exit
     fi
@@ -85,7 +85,7 @@
     printf "  EV:           "
         if [ "${EV}" = yes ] || [ "${TYPE}" -eq 5 ]; then
             printf "Yes\n"
-        else 
+        else
             printf "No\n"
         fi
     printf ""
@@ -121,7 +121,7 @@
         done
     #
     # Goes here if its an "EV" or Type 5(Geotrust), asks for Parameters
-    # and then gernerates csr & key with the last Command 
+    # and then gernerates csr & key with the last Command
     elif [ "${EV}" = yes ] || [ "${TYPE}" -eq 5 ]; then
         printf "\nLand: (Bsp: DE) "
         read -r LAND
@@ -134,7 +134,7 @@
         printf "Abteilungsname: "
         read -r ABTEILUNGSNAME
         openssl req -new -newkey rsa:2048 -nodes -sha256 -utf8 -subj "/C=${LAND}/ST=${BUNDESLAND}/L=${STADT}/O=${FIRMENNAME}/OU=${ABTEILUNGSNAME}/CN=$PREFIX${DOMAIN}" -keyout  $PREFIX"$DOMAIN".key -out $PREFIX"$DOMAIN".csr
-    #   
+    #
     # Goes here if type is AlphaSSl or Wildcard (if not EV nor SAN nor Geotrust)
     else    # elif [ "${EV}" = no ]; then
         openssl req -new -newkey rsa:2048 -nodes -sha256 -utf8 -subj "/C=DE/CN=$CN$DOMAIN" -keyout $PREFIX"$DOMAIN".key -out $PREFIX"$DOMAIN".csr
@@ -169,14 +169,14 @@
     printf "%s$FINDINGS"
     printf "\n\nWant me to open the Directory in vscode and the Browser for you?\nyes/no: "
     read -r ANSWER
-    if [ "${ANSWER}" == "yes" ]; then
+    if [ "${ANSWER}" == "yes" ] || [ "${ANSWER}" == "y" ]; then
     	nemo "$FINDINGS"
     	nemo "$DIRECTORY"
     	code "$DIRECTORY"
    	firefox "$DOMAIN"
-    	firefox "service2.continum.net/services/dns/" 
+    	firefox "service2.continum.net/services/dns/"
     	firefox https://gui.cps-datensysteme.de/group.php/sslcert/create/sslcert?step=0&
-    elif [ "${ANSWER}" == "no" ]; then
+    elif [ "${ANSWER}" == "no" ] || [ "${ANSWER}" == "n" ]; then
     	printf "Okay, i will not open them.\n\n"
     else
     	printf "This didnt work, but you should be able to do the last steps on your own. I believe in you.\n\n"
