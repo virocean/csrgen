@@ -1,7 +1,8 @@
 #!/bin/bash
 #
     FOLDER=~/Zertifikate/ #The .csr&.key files will be created here
-    USER=DWE              #Important for the "old_" Folder
+    USERK=DWE              #Important for the "old_" Folder
+    USER=
     printf "\n##WELCOME TO CSRGen##\n\n\n"
 #
 # 1) Reading the Name of the Domain the Cert is being made for
@@ -13,7 +14,7 @@
     read -r SUBDOMAIN
     if [ "${SUBDOMAIN}" == "yes" ] || [ "${SUBDOMAIN}" == "y" ]; then
         printf "\nFormat: subdomain.domain.de"
-    elif [ "${SUBDOMAIN}" == "no" ] || [ "${SUBDOMAIN}" == "no" ]; then
+    elif [ "${SUBDOMAIN}" == "no" ] || [ "${SUBDOMAIN}" == "n" ]; then
         printf "\nFormat: (NOT www.)domain.de"
     else
         printf "You have to type \"yes\" or \"no\" \nexiting.."
@@ -27,7 +28,7 @@
     printf "\n\n2) Choose the certificate type.\n"
     printf "These are the Options:\n"
     printf    "1.) AlphaSSL\n"
-    printf    "2.) Wildcard\n"
+    printf    "2.) AlphaSSL Wildcard\n"
     printf    "3.) SAN\n"
     printf    "4.) LetsEncrypt\n"
     printf    "5.) GeoTrust EV\n"
@@ -76,7 +77,7 @@
         if [ "${TYPE}" -eq 1 ]; then
             printf "AlphaSSL\n"
         elif [ "${TYPE}" -eq 2 ]; then
-            printf "Wildcard\n"
+            printf "AlphaSSL Wildcard\n"
         elif [ "${TYPE}" -eq 3 ]; then
             printf "SAN\n"
         elif [ "${TYPE}" -eq 5 ]; then
@@ -144,19 +145,19 @@
     touch "$DIRECTORY""$PREFIX""$DOMAIN".crt
     touch "$DIRECTORY""$PREFIX""$DOMAIN".pem
     touch "$DIRECTORY""$PREFIX""$DOMAIN".int
-    mkdir "$DIRECTORY"old_"$DATE"_"$USER"
+    mkdir "$DIRECTORY"old_"$DATE"_"$USERK"
     touch "$DIRECTORY"Notizen
         #This is so the right Type is being added in the notes
         if [ "${TYPE}" -eq 1 ]; then
         TYPEWRITTEN="AlphaSSL"
         elif [ "${TYPE}" -eq 2 ]; then
-        TYPEWRITTEN="Wildcard"
+        TYPEWRITTEN="AlphaSSL Wildcard"
         elif [ "${TYPE}" -eq 3 ]; then
         TYPEWRITTEN="SAN"
         elif [ "${TYPE}" -eq 5 ]; then
         TYPEWRITTEN="Geotrust EV"
         fi
-    printf "Domain: ""$DOMAIN""%s\n\nopenssl rsa -noout -modulus -in *$DOMAIN.key | openssl md5; \\nopenssl x509 -noout -modulus -in *$DOMAIN.crt | openssl md5; \\nopenssl req -noout -modulus -in *$DOMAIN.csr | openssl md5\n\nTXT-Record: \n\n\nHallo, der Serviceauftrag wurde erledigt.\n\n@BO Hier sind die zugehörigen SSL-Zertifikatsdaten für $CN$DOMAIN\n\n\tDomain:\t\t$DOMAIN\n\tErstellt:\t\t\n\tExpire:\t\t\n\tType:\t\t${TYPEWRITTEN}\n\tApprover-Type:\t\n\tObjectID:\t\t\n\nViele Grüße\nDavid Wendl" | cat >> Notizen
+    printf "Domain: ""$DOMAIN""%s\n\nopenssl rsa -noout -modulus -in *$DOMAIN.key | openssl md5; \\nopenssl x509 -noout -modulus -in *$DOMAIN.crt | openssl md5; \\nopenssl req -noout -modulus -in *$DOMAIN.csr | openssl md5\n\nTXT-Record: \n\n\nHallo, der Serviceauftrag wurde erledigt.\n\n@BO Hier sind die zugehörigen SSL-Zertifikatsdaten für $CN$DOMAIN\n\n\tDomain:\t\t$DOMAIN\n\tErstellt:\t\t\t\n\tExpire:\t\t\t\n\tType:\t\t\t${TYPEWRITTEN}\n\tApprover-Type:\t\n\tObjectID:\t\t\n\nViele Grüße\n${USER}" | cat >> Notizen
     cat "$DIRECTORY""$PREFIX""$DOMAIN".key >> "$DIRECTORY""$PREFIX""$DOMAIN".pem
     printf "\n\n"
     cat "$DIRECTORY"*csr
