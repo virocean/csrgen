@@ -58,8 +58,8 @@
     printf "\n1, 2 ,3, 4 or 5?: "
     read -r TYPE
     #
-    if [ "${TYPE}" -eq 1 ] || [ "${TYPE}" -eq 5 ];
-        then
+    if [ "${TYPE}" -eq 1 ] || [ "${TYPE}" -eq 5 ];                              #If Type AlphaSSl or Wildcard then check for a subdomain first,
+        then                                                                    #else just put www. as prefix and as CN
             if [ "${SUBDOMAIN}" == "yes" ] || [ "${SUBDOMAIN}" == "y" ]; then
                 PREFIX=""
 	        else
@@ -109,9 +109,9 @@
         fi
     printf "  EV:           "
         if [ "${EV}" = yes ] || [ "${TYPE}" -eq 5 ]; then
-            printf "Yes\n"
+            printf "Yes\n\n"
         else
-            printf "No\n"
+            printf "No\n\n"
         fi
     printf ""
 #
