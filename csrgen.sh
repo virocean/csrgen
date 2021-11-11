@@ -1,23 +1,46 @@
 #!/bin/bash
-#
-    FOLDER=~/Zertifikate/ #The .csr&.key files will be created here
-    USERK=DWE              #Important for the "old_" Folder
-    USER=
-    printf "\n##WELCOME TO CSRGen##\n\n\n"
+#Checks if configfile and ZertifikateFolder exists and if not creates them
+    if [ -e ~/.csrgen.conf ]
+    then
+        source ~/.csrgen.conf
+    else
+        touch ~/.csrgen.conf
+        printf "\nDu hast noch keine Konfig, wie ist dein MA-Kuerzel? (z.B CSI):  "
+        read -r USERKUERZEL
+        printf "Wie ist dein Vorname? (Der kommt in das E-Mailtemplate):\t"
+        read -r VORNAME
+        printf "Wie ist dein Nachname?: \t\t\t\t\t"
+        read -r NACHNAME
+        printf "Und jetzt noch kurz deine Sozialversicherungsnummer?:\t\t"
+        sleep 3s
+        printf "\n\nSpaß, der Name hat gereicht.\n"
+        sleep 2s
+        printf "#!/bin/bash\nFOLDER=~/Zertifikate/\n%sUSERKUERZEL=${USERKUERZEL}\nUSER=\'${VORNAME} ${NACHNAME}'\n" > ~/.csrgen.conf
+        source ~/.csrgen.conf
+    fi
+    if [ -e ~/Zertifikate/ ]
+    then
+        :
+    else
+        mkdir ~/Zertifikate/
+    fi
 #
 # 1) Reading the Name of the Domain the Cert is being made for
 #
+    clear
+    printf "\n\n##WELCOME TO CSRGen##\n\n\n"
+    sleep 1s
     printf "1) Name the Domain you want to create a csr for:\n"
     printf "\nIf its a SAN Certificate, just enter the name of the main domain."
     printf "\nIs the csr for a subdomain except www? (For example cloud.domain.de)"
-    printf "\nyes/no: "
+    printf "\ny/n: "
     read -r SUBDOMAIN
     if [ "${SUBDOMAIN}" == "yes" ] || [ "${SUBDOMAIN}" == "y" ]; then
         printf "\nFormat: subdomain.domain.de"
     elif [ "${SUBDOMAIN}" == "no" ] || [ "${SUBDOMAIN}" == "n" ]; then
         printf "\nFormat: (NOT www.)domain.de"
     else
-        printf "You have to type \"yes\" or \"no\" \nexiting.."
+        printf "You have to type \"y\" or \"n\" \nexiting.."
         exit
     fi
     printf "\nDomain: "
@@ -71,6 +94,7 @@
         exit
     fi
     #
+    clear
     printf "\nHeres your inputs:\n"
     printf "  Domain:       %s$DOMAIN"
     printf "\n  Cert Type:    "
@@ -145,7 +169,7 @@
     touch "$DIRECTORY""$PREFIX""$DOMAIN".crt
     touch "$DIRECTORY""$PREFIX""$DOMAIN".pem
     touch "$DIRECTORY""$PREFIX""$DOMAIN".int
-    mkdir "$DIRECTORY"old_"$DATE"_"$USERK"
+    mkdir "$DIRECTORY"old_"$DATE"_"$USERKUERZEL"
     touch "$DIRECTORY"Notizen
         #This is so the right Type is being added in the notes
         if [ "${TYPE}" -eq 1 ]; then
@@ -157,16 +181,16 @@
         elif [ "${TYPE}" -eq 5 ]; then
         TYPEWRITTEN="Geotrust EV"
         fi
-    printf "Domain: ""$DOMAIN""%s\n\nopenssl rsa -noout -modulus -in *$DOMAIN.key | openssl md5; \\nopenssl x509 -noout -modulus -in *$DOMAIN.crt | openssl md5; \\nopenssl req -noout -modulus -in *$DOMAIN.csr | openssl md5\n\nTXT-Record: \n\n\nHallo, der Serviceauftrag wurde erledigt.\n\n@BO Hier sind die zugehörigen SSL-Zertifikatsdaten für $CN$DOMAIN\n\n\tDomain:\t\t$DOMAIN\n\tErstellt:\t\t\t\n\tExpire:\t\t\t\n\tType:\t\t\t${TYPEWRITTEN}\n\tApprover-Type:\t\n\tObjectID:\t\t\n\nViele Grüße\n${USER}" | cat >> Notizen
+    printf "Domain: ""$CN$DOMAIN""%s\n\nTXT-Record: \n\n\nHallo, der Serviceauftrag wurde erledigt.\n\n@BO Hier sind die zugehörigen SSL-Zertifikatsdaten für $CN$DOMAIN\n\n\tDomain:\t\t$CN$DOMAIN\n\tErstellt:\t\t\t\n\tExpire:\t\t\t\n\tType:\t\t\t${TYPEWRITTEN}\n\tApprover-Type:\t\n\tObjectID:\t\t\n\nViele Grüße\n${USER} \n" | cat >> Notizen
     cat "$DIRECTORY""$PREFIX""$DOMAIN".key >> "$DIRECTORY""$PREFIX""$DOMAIN".pem
     printf "\n\n"
     cat "$DIRECTORY"*csr
-    printf "\n\n##Heres the dig ns:\n "
-    dig ns "$DOMAIN"
+    printf "\n\n##Heres the Nameservers::\n "
+    dig ns "$DOMAIN" | grep -A 2 'ANSWER SECTION'
     #
     #Opening the old cert file
-    printf "\n\nIf its a Certrenewal the old files may be around here: "
-    FINDINGS=$(find ~/git -name "*$DOMAIN*.*")
+    printf "\n\nIf its a Certrenewal the old files may be around here: \n"
+    FINDINGS=$(find ~/git -name "*$DOMAIN*.*"  | grep prod | grep 'pem\|crt')
     printf "%s$FINDINGS"
     printf "\n\nWant me to open the Directory in vscode and the Browser for you?\nyes/no: "
     read -r ANSWER
