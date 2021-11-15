@@ -1,5 +1,5 @@
 #!/bin/bash
-#Checks if configfile and ZertifikateFolder exists and if not creates them
+#Checks if configfile and Zertifikate-Folder exists and if not creates them
     if [ -e ~/.csrgen.conf ]
     then
         source ~/.csrgen.conf
@@ -28,22 +28,20 @@
 # 1) Reading the Name of the Domain the Cert is being made for
 #
     clear
-    printf "\n\n##WELCOME TO CSRGen##\n\n\n"
+    printf "\n\n##WELCOME TO CSRGen##\n"
     sleep 1s
-    printf "1) Name the Domain you want to create a csr for:\n"
-    printf "\nIf its a SAN Certificate, just enter the name of the main domain."
-    printf "\nIs the csr for a subdomain except www? (For example cloud.domain.de)"
+    printf "\n1) Is the csr for a subdomain? (For example cloud.domain.de)(not www.)"
     printf "\ny/n: "
     read -r SUBDOMAIN
     if [ "${SUBDOMAIN}" == "yes" ] || [ "${SUBDOMAIN}" == "y" ]; then
-        printf "\nFormat: subdomain.domain.de"
+        printf "\nFormat: subdomain.domain.tld"
     elif [ "${SUBDOMAIN}" == "no" ] || [ "${SUBDOMAIN}" == "n" ]; then
-        printf "\nFormat: (NOT www.)domain.de"
+        printf "\nFormat: (NOT www.)domain.tld"
     else
         printf "You have to type \"y\" or \"n\" \nexiting.."
         exit
     fi
-    printf "\nDomain: "
+    printf "\nName the Domainname: "
     read -r DOMAIN
 #
 # 2) Choosing Cert Type and confirming
@@ -93,27 +91,6 @@
         printf "Number not betweeen 1 and 5, try again.\n  exiting.."
         exit
     fi
-    #
-    clear
-    printf "\nHeres your inputs:\n"
-    printf "  Domain:       %s$DOMAIN"
-    printf "\n  Cert Type:    "
-        if [ "${TYPE}" -eq 1 ]; then
-            printf "AlphaSSL\n"
-        elif [ "${TYPE}" -eq 2 ]; then
-            printf "AlphaSSL Wildcard\n"
-        elif [ "${TYPE}" -eq 3 ]; then
-            printf "SAN\n"
-        elif [ "${TYPE}" -eq 5 ]; then
-            printf "Geotrust\n"
-        fi
-    printf "  EV:           "
-        if [ "${EV}" = yes ] || [ "${TYPE}" -eq 5 ]; then
-            printf "Yes\n\n"
-        else
-            printf "No\n\n"
-        fi
-    printf ""
 #
 # 3) Creating dedicated Folder an executing the keygen-commands in it
 #
@@ -146,7 +123,7 @@
         done
     #
     # Goes here if its an "EV" or Type 5(Geotrust), asks for Parameters
-    # and then gernerates csr & key with the last Command
+    # and then generates csr & key with the last Command
     elif [ "${EV}" = yes ] || [ "${TYPE}" -eq 5 ]; then
         printf "\nLand: (Bsp: DE) "
         read -r LAND
@@ -165,6 +142,27 @@
         openssl req -new -newkey rsa:2048 -nodes -sha256 -utf8 -subj "/C=DE/CN=$CN$DOMAIN" -keyout $PREFIX"$DOMAIN".key -out $PREFIX"$DOMAIN".csr
     fi
     #
+    clear
+    #Prints out inputs
+    printf "\nHeres your inputs:\n"
+    printf "  Domain:       %s$DOMAIN"
+    printf "\n  Cert Type:    "
+        if [ "${TYPE}" -eq 1 ]; then
+            printf "AlphaSSL\n"
+        elif [ "${TYPE}" -eq 2 ]; then
+            printf "AlphaSSL Wildcard\n"
+        elif [ "${TYPE}" -eq 3 ]; then
+            printf "SAN\n"
+        elif [ "${TYPE}" -eq 5 ]; then
+            printf "Geotrust\n"
+        fi
+    printf "  EV:           "
+        if [ "${EV}" = yes ] || [ "${TYPE}" -eq 5 ]; then
+            printf "Yes\n"
+        else
+            printf "No\n"
+        fi
+    printf ""
     #Creates all the files in the dedicated directory
     touch "$DIRECTORY""$PREFIX""$DOMAIN".crt
     touch "$DIRECTORY""$PREFIX""$DOMAIN".pem
@@ -202,11 +200,8 @@
     	firefox "service2.continum.net/services/dns/"
     	firefox https://gui.cps-datensysteme.de/group.php/sslcert/create/sslcert?step=0&
     elif [ "${ANSWER}" == "no" ] || [ "${ANSWER}" == "n" ]; then
-    	printf "Okay, i will not open them.\n\n"
+    	printf "\nOkay, i will not open them.\n\n"
     else
-    	printf "This didnt work, but you should be able to do the last steps on your own. I believe in you.\n\n"
+    	printf "\nThis didnt work, but you should be able to do the last steps on your own. I believe in you.\n\n"
     fi
     exit
-#
-# TO-Do: Switch Step 1 & 2
-#
