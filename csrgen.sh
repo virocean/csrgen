@@ -2,21 +2,21 @@
 #
 # 0) Checks if configfile and Zertifikate-Folder exists and if not creates them
 #
-    if [ -e ~/.csrgen.conf ]; then source ~/.csrgen.conf  # If -e checks if file exists and sources it
-    else touch ~/.csrgen.conf                             # If it doesnt exist then it creates it
-        printf "\nDu hast noch keine Konfig, wie ist dein MA-Kuerzel? (z.B CSI):  "; read -r USERKUERZEL
-        printf "Wie ist dein Vorname? (Der kommt in das E-Mailtemplate):\t";         read -r VORNAME
-        printf "Wie ist dein Nachname?: \t\t\t\t\t" ;                                read -r NACHNAME
-        printf "Und jetzt noch kurz deine Sozialversicherungsnummer?:\t\t";          sleep 3s
-        printf "\n\nSpaß, der Name hat gereicht.\n";                                 sleep 2s
-        printf "#!/bin/bash\nFOLDER=~/Zertifikate/\n%sUSERKUERZEL=${USERKUERZEL}\nUSER=\'${VORNAME} ${NACHNAME}'\n" > ~/.csrgen.conf
+    FILE="~/.csrgen.conf"
+###### If file exists (-f) then source file else (||): create it
+    [[ -f FILE && source $FILE || touch $FILE ]]
+        printf "\nDu hast noch keine Konfig, wie ist dein MA-Kuerzel? (z.B CSI):  ";   read -r USERKUERZEL
+        printf "Wie ist dein Vorname? (Der kommt in das E-Mailtemplate):\t";           read -r VORNAME
+        printf "Wie ist dein Nachname?: \t\t\t\t\t" ;                                  read -r NACHNAME
+        printf "In welchen Folder sollen die CSRs? (Pfad ab HOME ( mit ~/) angeben): " read -r FOLDER
+        printf "Und jetzt noch kurz deine Sozialversicherungsnummer?:\t\t";            sleep 3s
+        printf "\n\nSpaß, der Name hat gereicht.\n";                                   sleep 2s
+        printf "#!/bin/bash\n%sFOLDER=$FOLDER\nUSERKUERZEL=${USERKUERZEL}\nUSER=\'${VORNAME} ${NACHNAME}'\n" \
+        > ~/.csrgen.conf
         source ~/.csrgen.conf
-    fi
-    if [ -e ~/Zertifikate/ ]; then  # If Folder exists
-        :                           # Do nothing
-    else mkdir ~/Zertifikate/       # else: create it
-    fi
-    clear
+        clear
+##### If Folder exists (-f) then do nothing (: = Do nothing) else (||): create it
+    [[ -f $FOLDER && : || mkdir $FOLDER ]]
 #
 # 1) Reading the Name of the Domain the Cert is being made for
 #
@@ -27,7 +27,7 @@
     elif [ "${SUBDOMAIN}" == "no" ] || [ "${SUBDOMAIN}" == "n" ]; then printf "\nFormat: (NOT www.)domain.tld"
     else printf "You have to type \"yes\" or \"no\"\n exiting.."; exit
     fi
-    printf "\nName the Domainname: " ; read -r DOMAIN
+    printf "\nName the Domainname: "; read -r DOMAIN
 #
 # 2) Choosing Cert type and determining prefix for Filename
 #
@@ -161,19 +161,22 @@
 # Create Commands wich can be used again
 # Beautify Note-Text
 # Make Typechoice readable
+
 askForYesOrNo () {
-    printf "\nyes / no: "; read -r ANSWER
-    if  [ "${ANSWER}" == "yes" ] || [ "${ANSWER}" == "y" ]; then return 0
-    elif [ "${ANSWER}" == "no" ] || [ "${ANSWER}" == "n" ]; then return 1
-    else printf "You have to type \"yes\" or \"no\"\n exiting.."; exit
+    if [ "${ALREADYASKED}" == "yes" ]; then :
+    else printf "\nyes / no: "
+    fi
+    read -r INPUT
+    if   [ "${INPUT}" == "yes" ] || [ "${INPUT}" == "y" ]; then ANSWER="yes"
+    elif [ "${INPUT}" == "no" ]  || [ "${INPUT}" == "n" ]; then :
+    else
+    printf "\"yes\" or \"no\": "
+    ALREADYASKED="yes"
+    askForYesOrNo
     fi
 }
-askForYesOrNo()
-yesOrNo=$?
-if [ "$yesOrNo" -eq "1" ]; then
-  echo "You typed yes"
-elif [ "$yesOrNo" -eq "2" ]; then
-   echo "You typed no"
-else
-  echo "You typed something else"
+askForYesOrNo
+if [ "${ANSWER}" == "yes" ]
+   then printf "You typed yes\n\n "
+else printf "You typed no\n\n "
 fi
