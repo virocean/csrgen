@@ -2,16 +2,17 @@
 #
 # 0) Checks if configfile and Zertifikate-Folder exists and if not creates them
 #
-##### IF config exists then source it, else create it
+##### Is config doesn't exist then source it, else create it
+##### (-e checks for existing file and "!" negates)
 #shellcheck source=/dev/null
     CONFIG=~/.csrgen.conf
     if [ ! -e ${CONFIG} ]; then touch ${CONFIG}
-        printf "\nDu hast noch keine Konfig, wie ist dein MA-Kuerzel? (z.B CSI):  "; read -r USERKUERZEL
-        printf "Wie ist dein Vorname? (Der kommt in das E-Mailtemplate):\t";         read -r FIRSTNAME
-        printf "Wie ist dein Nachname?: \t\t\t\t\t" ;                                read -r LASTNAME
-        printf "In welchen Folder sollen die CSRs? (Pfad ab HOME angeben): ";        read -r FOLDER; FOLDER=~/${FOLDER}
-        printf "Und jetzt noch kurz deine Sozialversicherungsnummer?:\t\t";          sleep 3s
-        printf "\n\nSpaß, der Name hat gereicht.\n";                                 sleep 2s
+        printf "\nDu hast noch keine Konfig, wie ist dein MA-Kuerzel? (z.B CSI): "; read -r USERKUERZEL
+        printf "Wie ist dein Vorname? (Der kommt in das E-Mailtemplate):         "; read -r FIRSTNAME
+        printf "Wie ist dein Nachname?:                                          "; read -r LASTNAME
+        printf "In welchen Folder sollen die CSRs? (Pfad ab HOME angeben):       "; read -r FOLDER; FOLDER=~/${FOLDER}
+        printf "Und jetzt noch kurz deine Sozialversicherungsnummer?:            "; sleep 3s
+        printf "\n\nSpaß, der Name hat gereicht.                                 "; sleep 2s
         printf "#!/bin/bash\n\
         %sFOLDER=$FOLDER\n\
         USERKUERZEL=${USERKUERZEL}\n\
@@ -27,26 +28,23 @@
 ##Function to ask for yes or no
 askForYesOrNo () {
     ANSWER=""
-    if [ "${ALREADYASKED}" == "yes" ];
-    then ALREADYASKED=""
+    if [ "${ALREADYASKED}" == "yes" ]; then ALREADYASKED=""
     else printf "\nyes / no: "
     fi
     read -r INPUT
     if   [ "${INPUT}" == "yes" ] || [ "${INPUT}" == "y" ]; then ANSWER="yes"
     elif [ "${INPUT}" == "no" ]  || [ "${INPUT}" == "n" ]; then :
     else
-    printf "\"yes\" or \"no\": "
-    ALREADYASKED="yes"
-    askForYesOrNo
+        printf "\"yes\" or \"no\": "
+        ALREADYASKED="yes"
+        askForYesOrNo
     fi
 }
 #
 # 1) Choosing Cert type and determining prefix for Filename
 #
 checktype () {
-    printf "\n\n##WELCOME TO CSRGen##\n"
-    printf "%b\n" \
-    "\n" \
+    printf "%b\n" "\n\n##WELCOME TO CSRGen##\n\n" \
     "1) Choose the certificate type." \
     "   These are the Options: " \
     "   AlphaSSL          = 1" \
@@ -83,7 +81,7 @@ checktype () {
         fi
     printf "\n3) Name the Domainname: "; read -r DOMAIN
     fi
-####Checks what kind of Subdomain and Prefix have to be used
+#### Checks what kind of Subdomain and Prefix have to be used
 #### Subomain will be entered into the Cert, Prefix determines part of the Filename.
     if [ "${CERTIFICATE_TYPE}" -eq "${AlphaSSL}" ] || [ "${CERTIFICATE_TYPE}" -eq "${GeoTrust_and_EV}" ];
     then                                                #If Type AlphaSSl or Wildcard then check for a subdomain first,
@@ -153,7 +151,7 @@ printf "%b\n" "[req]" \
         printf "Firmenname:     ";   read -r FIRMENNAME
         printf "Abteilungsname: ";   read -r ABTEILUNGSNAME
         openssl req -new -newkey rsa:2048 -nodes -sha256 -utf8 -subj \
-        "/C=${LAND}/ST=${BUNDESLAND}/L=${STADT}/O=${FIRMENNAME}/OU=${ABTEILUNGSNAME}/CN=$PREFIX${DOMAIN}" \
+        "/C=${LAND}/ST=${BUNDESLAND}/L=${STADT}/O=${FIRMENNAME}/OU=${ABTEILUNGSNAME}/CN=${CN}${DOMAIN}" \
         -keyout  $PREFIX"$DOMAIN".key -out $PREFIX"$DOMAIN".csr
 ##If AlphaSSl or Wildcard (if not SAN nor EV nor Geotrust)
     else
@@ -163,17 +161,17 @@ printf "%b\n" "[req]" \
     clear
 #####Prints out inputs
     printf "\nHeres your inputs:\n  Domain:       %s$DOMAIN""\n  Cert Type:    "
-    if   [ "${CERTIFICATE_TYPE}" -eq "${AlphaSSL}" ];        then printf "AlphaSSL\n"
-    elif [ "${CERTIFICATE_TYPE}" -eq "${Wildcard}" ];        then printf "AlphaSSL Wildcard\n"
-    elif [ "${CERTIFICATE_TYPE}" -eq "${SAN}" ];             then printf "SAN\n"
-    elif [ "${CERTIFICATE_TYPE}" -eq "${GeoTrust_and_EV}" ]; then printf "Geotrust\n"
+    if   [ "${CERTIFICATE_TYPE}" -eq "${AlphaSSL}" ];        then printf "AlphaSSL"
+    elif [ "${CERTIFICATE_TYPE}" -eq "${Wildcard}" ];        then printf "AlphaSSL Wildcard"
+    elif [ "${CERTIFICATE_TYPE}" -eq "${SAN}" ];             then printf "SAN"
+    elif [ "${CERTIFICATE_TYPE}" -eq "${GeoTrust_and_EV}" ]; then printf "Geotrust"
     fi
-    printf "  EV:           "
+    printf "\n  EV:           "
     if [ "${EV}" = yes ] || [ "${CERTIFICATE_TYPE}" -eq "${GeoTrust_and_EV}" ];
-        then printf "Yes\n";
-        else printf "No\n"
+        then printf "Yes";
+        else printf "No"
     fi
-    printf ""
+    printf "\n"
 ##Creates all the files in the dedicated directory
     FILENAME="$DIRECTORY""$PREFIX""$DOMAIN"
     touch \
