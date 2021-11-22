@@ -7,23 +7,28 @@
     CONFIG=~/.csrgen.conf
     if [ ! -e ${CONFIG} ]; then touch ${CONFIG}
         printf "\nDu hast noch keine Konfig, wie ist dein MA-Kuerzel? (z.B CSI):  "; read -r USERKUERZEL
-        printf "Wie ist dein Vorname? (Der kommt in das E-Mailtemplate):\t";         read -r VORNAME
-        printf "Wie ist dein Nachname?: \t\t\t\t\t" ;                                read -r NACHNAME
+        printf "Wie ist dein Vorname? (Der kommt in das E-Mailtemplate):\t";         read -r FIRSTNAME
+        printf "Wie ist dein Nachname?: \t\t\t\t\t" ;                                read -r LASTNAME
         printf "In welchen Folder sollen die CSRs? (Pfad ab HOME angeben): ";        read -r FOLDER; FOLDER=~/${FOLDER}
         printf "Und jetzt noch kurz deine Sozialversicherungsnummer?:\t\t";          sleep 3s
         printf "\n\nSpaß, der Name hat gereicht.\n";                                 sleep 2s
-        printf "#!/bin/bash\n%sFOLDER=$FOLDER\nUSERKUERZEL=${USERKUERZEL}\nUSER=\'${VORNAME} ${NACHNAME}'\n" \
+        printf "#!/bin/bash\n\
+        %sFOLDER=$FOLDER\n\
+        USERKUERZEL=${USERKUERZEL}\n\
+        FULLNAME=\'${FIRSTNAME} ${LASTNAME}'\n" \
         > ${CONFIG}
-    fi 
+    fi
     source ${CONFIG}
     clear
-##### If Folder exists then do nothing (: = Do nothing) else create it
+##### If Folder exists(-e) then do nothing (: = Do nothing) else create it
     if [[ -e ${FOLDER} ]]; then :
     else mkdir "$FOLDER"
     fi
 ##Function to ask for yes or no
 askForYesOrNo () {
-    if [ "${ALREADYASKED}" == "yes" ]; then :
+    ANSWER=""
+    if [ "${ALREADYASKED}" == "yes" ];
+    then ALREADYASKED=""
     else printf "\nyes / no: "
     fi
     read -r INPUT
@@ -36,48 +41,69 @@ askForYesOrNo () {
     fi
 }
 #
-# 1) Reading the Name of the Domain the Cert is being made for
+# 1) Choosing Cert type and determining prefix for Filename
 #
-    printf "\n\n##WELCOME TO CSRGen##\n"; sleep 0.5s
-    printf "\n1) Is the csr for a subdomain? (Forexample cloud.domain.de)(not www.)"
+checktype () {
+    printf "\n\n##WELCOME TO CSRGen##\n"
+    printf "%b\n" \
+    "\n" \
+    "1) Choose the certificate type." \
+    "   These are the Options: " \
+    "   AlphaSSL          = 1" \
+    "   Wildcard          = 2" \
+    "   SAN               = 3" \
+    "   LetsEncrypt       = 4" \
+    "   GeoTrust EV       = 5\n"
+    AlphaSSL=1
+    Wildcard=2
+    SAN=3
+    LetsEncrypt=4
+    GeoTrust_and_EV=5
+    printf "Enter 1 - 5: "; read -r CERTIFICATE_TYPE
+    if [ "${CERTIFICATE_TYPE}" -eq "${LetsEncrypt}" ]; then
+####Promts to a Web-Link and exits if its a LetsEncryptcertificate
+        clear
+        printf "%b\n" "\n" \
+        "You can order LetsEncrypt-certificates via Service2" \
+	    "Want me to open firefox for you?"
+        askForYesOrNo
+	    if  [ "${ANSWER}" == "yes" ]
+        then firefox "https://service.continum.net/services/ssl-certificates"; exit
+        else printf "\nAlright, heres the Link:\nhttps://service.continum.net/services/ssl-certificates\n\n"; exit
+        fi
+    else
+#
+# 2) Reading the Name of the Domain the Cert is being made for
+#
+    printf "\n2) Is the csr for a subdomain? (For example cloud.domain.de)(not www.)"
     askForYesOrNo
-    if [ "${ANSWER}" == "yes" ]
-    then printf "\nFormat: subdomain.domain.tld"; SUBDOMAIN="yes"
-    else printf "\nFormat: (NOT www.)domain.tld"; SUBDOMAIN="no"
+        if [ "${ANSWER}" == "yes" ]
+        then printf "\nFormat: subdomain.domain.tld"; SUBDOMAIN="yes"
+        else printf "\nFormat: (NOT www.)domain.tld"; SUBDOMAIN="no"
+        fi
+    printf "\n3) Name the Domainname: "; read -r DOMAIN
     fi
-    printf "\nName the Domainname: "; read -r DOMAIN
-#
-# 2) Choosing Cert type and determining prefix for Filename
-#
-    printf "\n\n2) Choose the certificate type.\n"
-    printf "These are the Options:\n"
-    printf "AlphaSSL          = 1\n"; AlphaSSL=1
-    printf "Wildcard          = 2\n"; Wildcard=2
-    printf "SAN               = 3\n"; SAN=3
-    printf "LetsEncrypt       = 4\n"; LetsEncrypt=4
-    printf "GeoTrust EV       = 5\n"; GeoTrust_and_EV=5
-    printf "\nEnter 1 - 5: "        ; read -r CERTIFICATE_TYPE
 ####Checks what kind of Subdomain and Prefix have to be used
 #### Subomain will be entered into the Cert, Prefix determines part of the Filename.
-    if [ "${CERTIFICATE_TYPE}" -eq "${AlphaSSL}" ] || [ "${CERTIFICATE_TYPE}" -eq "${GeoTrust_and_EV}" ]; 
-        then                                                #If Type AlphaSSl or Wildcard then check for a subdomain first,
+    if [ "${CERTIFICATE_TYPE}" -eq "${AlphaSSL}" ] || [ "${CERTIFICATE_TYPE}" -eq "${GeoTrust_and_EV}" ];
+    then                                                #If Type AlphaSSl or Wildcard then check for a subdomain first,
         if [ "${SUBDOMAIN}" == "yes" ]; then PREFIX=""      #If theres a subdomain then leave prefix empty
 	    else PREFIX="www." CN="www."                        #else just put www. as prefix and as CN
         fi
     elif [ "${CERTIFICATE_TYPE}" -eq "${SAN}" ];         then PREFIX="san."
     elif [ "${CERTIFICATE_TYPE}" -eq "${Wildcard}" ];    then PREFIX="wc." CN="*."
-    printf "Is it an Certificate with Extended Validation (EV)?\nyes/no: "; read -r EV
-    elif [ "${CERTIFICATE_TYPE}" -eq "${LetsEncrypt}" ]; then
-####Promts to a Web-Link if its a LetsEncryptcertificate
-        printf "\n\nYou can order LetsEncrypt Certificates via Service2"
-	    printf "\nWant me to open firefox for you?\nyes/no: "
+    printf "Is it an Certificate with Extended Validation (EV)?"
         askForYesOrNo
-	    if  [ "${ANSWER}" == "yes" ]
-        then firefox "https://service.continum.net/services/ssl-certificates\n\n" exit
-        else printf "Alright, heres the Link:\nhttps://service.continum.net/services/ssl-certificates\n\nBye!"; exit
+        if [ "${ANSWER}" == "yes" ]
+        then EV="yes"
+        else EV="no"
         fi
-    else printf "Number not betweeen 1 and 5, try again.\n  exiting.."; exit
+    else printf "Number not betweeen 1 and 5, try again.\n"; sleep 2s
+    clear
+    checktype
     fi
+}
+checktype
 #
 # 3) Creating dedicated Folder an executing the keygen-commands in it
 #
@@ -93,18 +119,28 @@ askForYesOrNo () {
         printf "Firmenname:     "  ; read -r FIRMENNAME
         printf "Abteilungsname: "  ; read -r ABTEILUNGSNAME
 ####This just prints the needed variables into the file openssl.conf, wich will be used to generate the SAN-csr
-        printf "[req]\ndistinguished_name = req_distinguished_name\
-        \nreq_extensions = v3_req\nprompt = no\n[req_distinguished_name]\
-        \nC = %s\nST = %s\nL = %s\nO = %s\nOU = %s\nCN = %\
-        s\n[v3_req]\nkeyUsage = keyEncipherment, dataEncipherment\
-        \nextendedKeyUsage = serverAuth\nsubjectAltName = @alt_names\n[alt_names]\n" \
-        "${LAND}" "${BUNDESLAND}" "${STADT}" "${FIRMENNAME}" "${ABTEILUNGSNAME}" "${DOMAIN}" >> openssl.cnf
+printf "%b\n" "[req]" \
+        "distinguished_name = req_distinguished_name" \
+        "req_extensions = v3_req" \
+        "prompt = no" \
+        "[req_distinguished_name]" \
+        "C = ${LAND}" \
+        "ST = ${BUNDESLAND}" \
+        "L = ${STADT}" \
+        "O = ${FIRMENNAME}" \
+        "OU = ${ABTEILUNGSNAME}" \
+        "CN = ${DOMAIN}" \
+        "[v3_req]" \
+        "keyUsage = keyEncipherment, dataEncipherment" \
+        "extendedKeyUsage = serverAuth" \
+        "subjectAltName = @alt_names" \
+        "[alt_names]" >> openssl.cnf
         printf "\nWeitere Domainnamen getrennt mit einem Leerzeichen: " ; read -r SANDOMAINS
         COUNTER=0
         for FQDN in ${SANDOMAINS}
         do
             (( COUNTER++ )) || true
-            printf "%sDNS.${COUNTER} = ${FQDN}" >> openssl.cnf
+            printf "DNS.%s${COUNTER} = ${FQDN}\n" >> openssl.cnf
             openssl genrsa -out san."$DOMAIN".key 2048
             openssl req -new -out san."$DOMAIN".csr -key san."$DOMAIN".key -config openssl.cnf
             openssl req -text -noout -in san."$DOMAIN".csr
@@ -120,7 +156,7 @@ askForYesOrNo () {
         "/C=${LAND}/ST=${BUNDESLAND}/L=${STADT}/O=${FIRMENNAME}/OU=${ABTEILUNGSNAME}/CN=$PREFIX${DOMAIN}" \
         -keyout  $PREFIX"$DOMAIN".key -out $PREFIX"$DOMAIN".csr
 ##If AlphaSSl or Wildcard (if not SAN nor EV nor Geotrust)
-    else    # elif [ "${EV}" = no ]; then
+    else
         openssl req -new -newkey rsa:2048 -nodes -sha256 -utf8 -subj \
         "/C=DE/CN=$CN$DOMAIN" -keyout $PREFIX"$DOMAIN".key -out $PREFIX"$DOMAIN".csr
     fi
@@ -140,7 +176,7 @@ askForYesOrNo () {
     printf ""
 ##Creates all the files in the dedicated directory
     FILENAME="$DIRECTORY""$PREFIX""$DOMAIN"
-    touch \    
+    touch \
         "${FILENAME}".crt \
 	    "${FILENAME}".pem \
 	    "${FILENAME}".int \
@@ -153,11 +189,20 @@ askForYesOrNo () {
     elif [ "${CERTIFICATE_TYPE}" -eq "${GeoTrust_and_EV}" ]; then CERTIFICATE_TYPEWRITTEN="Geotrust EV"
     fi
 #####Creating the text in the notes
-    { printf "%sDomain: ""$CN$DOMAIN""%s\n\nTXT-Record: \n\n\nHallo, der Serviceauftrag wurde erledigt."; \
-    printf "%s\n\n@BO Hier sind die zugehörigen SSL-Zertifikatsdaten für $CN$DOMAIN\n\n\tDomain:\t\t$CN$DOMAIN\n\t"; \
-    printf "%sErstellt:\t\t\t\n\tExpire:\t\t\t\n\Type:\t\t\t${CERTIFICATE_TYPEWRITTEN}\n"; \
-    printf "\tApprover-type:\t\n\tObjectID:\t\t\n\n<BILD>\n\n"; \
-    printf "%sViele Grüße\n${USER} \n"; } >> Notizen
+    printf "%b\n" \
+    "Domain: ""$CN$DOMAIN""\n" \
+    "TXT-Record: \n" \
+    "Hallo, der Serviceauftrag wurde erledigt.\n" \
+    "@BO Hier sind die zugehörigen SSL-Zertifikatsdaten für $CN$DOMAIN\n\t" \
+    "Domain:            $CN$DOMAIN  " \
+    "Erstellt:              " \
+    "Expire:                " \
+    "Type:          ${CERTIFICATE_TYPEWRITTEN}  " \
+    "Approver-type:             " \
+    "ObjectID:      \n" \
+    "<BILD>\n" \
+    "Viele Grüße" \
+    "${FULLNAME} \n" >> Notizen
     cat "$DIRECTORY""$PREFIX""$DOMAIN".key >> "$DIRECTORY""$PREFIX""$DOMAIN".pem
     printf "\n\n"
     cat "$DIRECTORY"*csr
@@ -166,10 +211,10 @@ askForYesOrNo () {
 #####Opening the old cert file
     printf "\n\nIf its a Certrenewal the old files may be around here: \n"
     FINDINGS=$(find ~/git/puppet/ -name "$DOMAIN*.*"  | grep -E 'prod|legacy' | grep -E 'pem|crt'); printf "%s$FINDINGS"
-    printf "\n\nWant me to open the Directory in vscode and the Browser for you? "; 
+    printf "\n\nWant me to open the Directory in vscode and the Browser for you? ";
     askForYesOrNo
     if [ "${ANSWER}" == "yes" ]; then
-    	nemo --no-default-window "$DIRECTORY";
+    	nemo --no-default-window "$DIRECTORY"
     	code "$DIRECTORY"
    	    firefox "$DOMAIN"
     	firefox "https://service.continum.net/services/dns/index"
@@ -180,6 +225,6 @@ askForYesOrNo () {
     exit
 
 ##ToDo
-# Create Commands wich can be used again (yes/no  and certificatechoice)
 # Beautify Note-Text
 # Make Typechoice readable
+# Switch 1 & 2 because else Letsencrypt is creating csrs too
