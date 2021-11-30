@@ -60,12 +60,14 @@ checktype () {
     LetsEncrypt=4
     GeoTrust_and_EV=5
     printf "Enter 1 - 5: "; read -r CERTIFICATE_TYPE
-    ### If its a LetsEncryptcertificate then promts to a Web-Link and opens SB2 on firefox
-    if ! [[ "${CERTIFICATE_TYPE}" =~ ^[1-5]+$ ]]; then        # If input is not a Number then ask again
+    # This if Statement checks if its a character(!) between 1-5 and the second one if its greater than 5
+    # otherwise it would still work if you entered 111, because the first statement only checks indivicual chars.
+    if ! [[ "${CERTIFICATE_TYPE}" =~ ^[1-5]+$ ]] || [[ ${CERTIFICATE_TYPE} -gt 5 ]]; then
         printf "\nThats not a Number between 1-5 try again.\n"; sleep 2s
         clear
         checktype
     elif
+    # If its a LetsEncryptcertificate then promts to a Web-Link and opens SB2 on firefox
     [ "${CERTIFICATE_TYPE}" -eq "${LetsEncrypt}" ]; then
         clear
         printf "%b\n" "\n" \
@@ -82,6 +84,7 @@ checktype () {
  askForSubdomain() {
      printf "\nIs the csr for a subdomain? (For example cloud.domain.de)(not www.)"
      askForYesOrNo
+     printf "If theres äüö in your Domain convert the name here first: https://www.denic.de/service/tools/idn-web-converter/ "
      if [ "${ANSWER}" == "yes" ]
          then printf "\nFormat: subdomain.domain.tld"; SUBDOMAIN="yes"
          else printf "\nFormat: (NOT www.)domain.tld"; SUBDOMAIN="no"
