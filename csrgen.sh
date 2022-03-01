@@ -1,7 +1,9 @@
+
+
 #!/bin/bash
 
 # 0) Checks if configfile and "Zertifikate"-Folder exists and if not creates them.
-   
+
    # If config doesn't exist then source it, else create it.
     # (-e checks for existing file and "!" negates)
      #Next line is for Error handling
@@ -21,7 +23,7 @@
         fi
         source ${CONFIG}
         clear
-    
+
      # If ("Zertifikate")-Folder exists(-e) then do nothing (: = Do nothing) else create it
        if [[ -e ${FOLDER} ]]; then :
        else mkdir "$FOLDER"
@@ -40,19 +42,17 @@
             yes|y|Y) ANSWER="yes" ;;
             no|n|N)  ANSWER="no"  ;;
             *) #(else)
-                printf "\"yes\" or \"no\": " 
+                printf "\"yes\" or \"no\": "
                 ALREADYASKED="yes"
                 askForYesOrNo   ;;
         esac
     }
-
     ##---------
     # Function to ask for Subdomains
     askForSubdomain() {
         printf "\nHat die domain eine Subdomain? (Nicht www.)"
         askForYesOrNo
         clear
-        printf "\nFalls die Domain äüö im Namen hat, dann konvertiere ihn zuerst hier:\nhttps://www.denic.de/service/tools/idn-web-converter/\n "
         case ${ANSWER} in
             yes) printf "\nFormat:                               subdomain.domain.tld"; SUBDOMAIN="yes" ;;
             no)  printf "\nFormat:                               (Nicht www.)domain.tld"; SUBDOMAIN="no"  ;;
@@ -68,7 +68,6 @@
         read -rp "Firmenname:     " FIRMENNAME
         read -rp "Abteilungsname: " ABTEILUNGSNAME
     }
-
     ##---------
     # Function to generate standard csr
     generateStandardcsr() {
@@ -76,7 +75,6 @@
         "/C=DE/CN=$CN$DOMAIN"\
         -keyout "$PREFIX""$DOMAIN".key -out "$PREFIX""$DOMAIN".csr
     }
-
     ##---------
     generateEVcsr() {
         getEVdata
@@ -84,8 +82,8 @@
             "/C=${LAND}/ST=${BUNDESLAND}/L=${STADT}/O=${FIRMENNAME}/OU=${ABTEILUNGSNAME}/CN=${CN}${DOMAIN}" \
             -keyout  $PREFIX"$DOMAIN".key -out $PREFIX"$DOMAIN".csr
     }
+   ##---------
 
-    ##---------
 # 1) Choosing Cert type and determining prefix for Filename
 #    Its put as a function so you call it again if theres a wrong input
 
@@ -103,7 +101,7 @@
         LetsEncrypt=4
         GeoTrust=5
 
-        read -rp "Wähle 1 - 5: " CERTIFICATE_TYPE    
+        read -rp "Wähle 1 - 5: " CERTIFICATE_TYPE
 
         case ${CERTIFICATE_TYPE} in
             ![1-5] ) # Number not between 1-5:           ---Ask again
@@ -124,7 +122,7 @@
                 printf "\n\nIst es ein Zertifikat mit Extended Validation (EV)?"
                     askForYesOrNo
                     EV=${ANSWER}
-                askForSubdomain 
+                askForSubdomain
                 ;;
 
             "${SAN}") #:                                ---Only change the prefix
@@ -146,8 +144,16 @@
 
     # Reading the Name of the Domain the Cert is being made for
     printf "\n"
-    read -rp "Nenne mir jetzt den Namen der Domain: " DOMAIN
+    read -rp "Nenne mir jetzt den Namen der Domain: " DOMAIN_UNCONVERTED
 
+    #Converts umlauts with idn
+    case $DOMAIN_UNCONVERTED in
+        *[äÄöÖüÜ]*) DOMAIN=$(idn "$DOMAIN_UNCONVERTED");
+            # Exits in case its not installed
+            if [  "$?" -eq 127  ]; then printf "\nInstalliere idn um Umlaute zu konvertieren\n\n"; exit 127; fi
+        ;;
+        *) DOMAIN=$DOMAIN_UNCONVERTED ;;
+    esac
 
 # 3) Creating dedicated folder and generating the csr-files with openssl.
 
@@ -159,7 +165,7 @@
 
 
     case ${CERTIFICATE_TYPE} in
-        
+
         "${AlphaSSL}" ) generateStandardcsr;;
 
         "${Wildcard}" ) if [ "${EV}" = "yes" ]; then generateEVcsr; else generateStandardcsr; fi ;;
@@ -197,7 +203,7 @@
             done
             ;;
 
-        "${GeoTrust}" ) 
+        "${GeoTrust}" )
             generateEVcsr
             clear
             ;;
@@ -206,7 +212,7 @@
 
 
 # 4) Creating the notes in the created folder
-    
+
     #Prints out inputs and assigns the types for he Notes
         printf "\nHier sind deine Inputs:\n  Domain:         %s$DOMAIN""\n  Zertifikatstyp: "
         case ${CERTIFICATE_TYPE} in
@@ -223,7 +229,7 @@
         FILENAME="$DIRECTORY""$PREFIX""$DOMAIN"
         touch "${FILENAME}".crt "${FILENAME}".pem "${FILENAME}".int "$DIRECTORY"Notizen
         mkdir "$DIRECTORY"old_"$DATE"_"$USERKUERZEL"
-    
+
     printf "%b\n"                                     \
     "Domain: ""$CN$DOMAIN""\n"                        \
     "TXT-Record: \n"                                  \
@@ -240,7 +246,7 @@
     "${FULLNAME} \n" >> Notizen
 
     cat "$DIRECTORY""$PREFIX""$DOMAIN".key >> "$DIRECTORY""$PREFIX""$DOMAIN".pem
-    
+
     printf "\n\n"
     cat "$DIRECTORY"*csr
     printf "\n\n##Hier sind die Nameserver:\n "
