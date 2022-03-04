@@ -1,12 +1,48 @@
-#!/bin/bash
+Skip to content
+Product 
+Team
+Enterprise
+Explore 
+Marketplace
+Pricing 
+Search
+Sign in
+Sign up
+D-ctrl
+/
+csrgen
+Public
+Code
+Issues
+Pull requests
+Actions
+Projects
+Wiki
+Security
+Insights
+csrgen/csrgen.sh
 
+David Wendl Added -f option to create csrs faster
+Latest commit c8cc009 1 hour ago
+ History
+ 1 contributor
+Executable File  303 lines (276 sloc)  11.5 KB
+  
+#!/bin/bash
+#-eax
+AlphaSSL=1
+Wildcard=2
+SAN=3
+LetsEncrypt=4
+GeoTrust=5
+#
 # 0) Checks if configfile and "Zertifikate"-Folder exists and if not creates them.
-   # If config doesn't exist then source it, else create it.
-    # (-e checks for existing file and "!" negates)
-     #Next line is for Error handling
-     #shellcheck source=/dev/null
+#
+    # If config doesn't exist then source it, else create it.
+     # (-e checks for existing file and "!" negates)
         CONFIG=~/.csrgen.conf
-        if [ ! -e ${CONFIG} ]; then touch ${CONFIG}
+        if [ ! -e "${CONFIG}" ]; then
+            touch "${CONFIG}"
             printf "\n"
             read -rp "Du hast noch keine Konfig, wie ist dein MA-Kuerzel? (z.B CSI): " USERKUERZEL
             read -rp "Wie ist dein Vorname? (Der kommt in das E-Mailtemplate):       " FIRSTNAME
@@ -18,20 +54,22 @@
             FULLNAME=\'${FIRSTNAME} ${LASTNAME}'\n" \
            > ${CONFIG}
         fi
+        #Next line exists so shellcheck wont throw an error
+        #shellcheck source=/dev/null
         source ${CONFIG}
         clear
 
      # If ("Zertifikate")-Folder exists(-e) then do nothing (: = Do nothing) else create it
-       if [[ -e ${FOLDER} ]]; then : else mkdir "$FOLDER"; fi
+       if [ ! -e "${FOLDER}" ]; then mkdir "${FOLDER}"; fi
 
     ##Function(Mini-program) to ask for yes or no
-    askForYesOrNo () {
+    askForYesOrNo() {
         ANSWER=""
         if [ "${ALREADYASKED}" == "yes" ]; then ALREADYASKED=""
         else printf "\nyes / no: "
         fi
         read -r INPUT
-        ## Case statement to format the answers so theyre always "yes" or "no" and nothing else
+        ## Format the answers so they're always "yes" or "no" and nothing else
         case "${INPUT}" in
             yes|y|Y) ANSWER="yes" ;;
             no|n|N)  ANSWER="no"  ;;
@@ -44,7 +82,7 @@
     ##---------
     # Function to ask for Subdomains
     askForSubdomain() {
-        printf "\nHat die domain eine Subdomain? (Nicht www.)"
+        printf "\nHat die Domain eine Subdomain? (Nicht www.)"
         askForYesOrNo
         clear
         case ${ANSWER} in
@@ -54,39 +92,33 @@
     }
     ##---------
 
+#
 # 1) Choosing Cert type and determining prefix for Filename
-#    Its put as a function so you call it again if theres a wrong input
-
-    getType() {
-        printf "%b\n" "\n\n##This is CSRgen##\n\n" \
+#
+    askForCertType() {
+        printf "%b\n" "\n##This is CSRgen##\n" \
         "   Wähle den Zertifikatstyp"     \
         "   AlphaSSL          = 1"        \
         "   Wildcard          = 2"        \
         "   SAN               = 3"        \
         "   LetsEncrypt       = 4"        \
         "   GeoTrust EV       = 5\n"
-        AlphaSSL=1
-        Wildcard=2
-        SAN=3
-        LetsEncrypt=4
-        GeoTrust=5
-
         read -rp "Wähle 1 - 5: " CERTIFICATE_TYPE
     }
 
     setPrefixAndCN(){
-        case ${CERTIFICATE_TYPE} in
-            ![1-5] ) # Number not between 1-5:          ---Ask again
+       # if [ -e "${OPTIONS}" ]; then CERTIFICATE_TYPE=$2 fi
+        case "${CERTIFICATE_TYPE}" in
+            ![1-5] ) # Number not between 1-5:          ---> Ask again
                 printf "\nDas ist keine Nummer zwischen 1-5, versuchs nochmal.\n"
-                sleep 2s; clear; getType ;;
+                sleep 2s; clear; askForCertType ;;
 
-            "${AlphaSSL}" | "${GeoTrust}" ) #           ---Ask if its for a subdomain before changing the prefix
-                askForSubdomain
+            "${AlphaSSL}" | "${GeoTrust}" ) #:          ---> Ask if its for a subdomain before changing the prefix
                 if [ "${CERTIFICATE_TYPE}" = "${GeoTrust}" ]; then EV="yes"; fi
                 if [ "${SUBDOMAIN}" = "yes" ]; then PREFIX=""; else PREFIX="www." CN="www."; fi
                 ;;
 
-            "${Wildcard}" ) #:                          ---Ask if its a certificate with EV
+            "${Wildcard}" ) #:                          ---> Ask if its a certificate with EV
                 PREFIX="wc." CN="*."
                 printf "\n\nIst es ein Zertifikat mit Extended Validation (EV)?"
                 askForYesOrNo
@@ -94,10 +126,10 @@
                 askForSubdomain
                 ;;
 
-            "${SAN}") #:                                ---Only change the prefix
+            "${SAN}") #:                                ---> Only change the prefix
                 PREFIX="san." ;;
 
-            "${LetsEncrypt}") #:                        ---Optionally prompts to the SB2-Website and then exits
+            "${LetsEncrypt}") #:                        ---> Optionally prompts to the SB2-Website and then exits
                 SB2LINK="https://service.continum.net/services/ssl-certificates"
                 printf "%b\n\n" \
                 "LetsEncrypt-Zertifikate kannst du über den Service2 bestellen: ${SB2LINK}" \
@@ -111,30 +143,36 @@
     }
 
     # Reading the Name of the Domain the Cert is being made for
-    getDomainName(){
-        printf "\n"
-        read -rp "Nenne mir jetzt den Namen der Domain: " DOMAIN_UNCONVERTED
-
-        #Converts umlauts with idn
-        case $DOMAIN_UNCONVERTED in
-            *[äÄöÖüÜ]*) DOMAIN=$(idn "$DOMAIN_UNCONVERTED");
+    convertUmlauts() {
+            #Converts umlauts with idn
+        case "${DOMAIN_UNCONVERTED}" in
+            *[äÄöÖüÜ]*) DOMAIN=$(idn "${DOMAIN_UNCONVERTED}");
                 # Exits in case its not installed
                 if [  "$?" -eq 127  ]; then printf "\nInstalliere idn um Umlaute zu konvertieren\n\n"; exit 127; fi
             ;;
-            *) DOMAIN=$DOMAIN_UNCONVERTED ;;
+            *) DOMAIN="${DOMAIN_UNCONVERTED}" ;;
         esac
     }
 
-# 2) Generating the csr-files with openssl.
+    askForDomainname(){
+        printf "\n"
+        read -rp "Nenne mir jetzt den Namen der Domain: " DOMAIN_UNCONVERTED
+        convertUmlauts
+    }
 
-    # Function to generate standard csr
+
+#
+# 2) Generating the csr-files with openssl.
+#
+    # Generates standard csr
     opensslStandardcsr() {
         openssl req -new -newkey rsa:2048 -nodes -sha256 -utf8 -subj \
         "/C=DE/CN=$CN$DOMAIN"\
         -keyout "$PREFIX""$DOMAIN".key -out "$PREFIX""$DOMAIN".csr
     }
-    # Function to ask for EV-Data
-    getEVdata() {
+
+    # We need this Data for SAN or EV Certificates
+    askForEVdata() {
         printf "\n"
         read -rp "Land: (Bsp: DE) " LAND
         read -rp "Bundesland:     " BUNDESLAND
@@ -142,10 +180,10 @@
         read -rp "Firmenname:     " FIRMENNAME
         read -rp "Abteilungsname: " ABTEILUNGSNAME
     }
-    
-    # Function to generate Extended Validation csr
+
+    # Generates Extended Validation(EV) csr
     opensslEVcsr() {
-        getEVdata
+        askForEVdata
         openssl req -new -newkey rsa:2048 -nodes -sha256 -utf8 -subj \
             "/C=${LAND}/ST=${BUNDESLAND}/L=${STADT}/O=${FIRMENNAME}/OU=${ABTEILUNGSNAME}/CN=${CN}${DOMAIN}" \
             -keyout  $PREFIX"$DOMAIN".key -out $PREFIX"$DOMAIN".csr
@@ -157,15 +195,10 @@
         DIRECTORY=$FOLDER$DATE-$PREFIX$DOMAIN/
         mkdir "$DIRECTORY"; cd "$DIRECTORY" || return
 
-
         case ${CERTIFICATE_TYPE} in
-
             "${AlphaSSL}" ) opensslStandardcsr;;
-
             "${Wildcard}" ) if [ "${EV}" = "yes" ]; then opensslEVcsr; else opensslStandardcsr; fi ;;
-
-            "${SAN}" ) getEVdata
-
+            "${SAN}" ) askForEVdata
                 # (Prints the needed variables into the file openssl.conf, wich will be used to generate the SAN-csr)
                 printf "%b\n" "[req]" \
                    "distinguished_name = req_distinguished_name" \
@@ -196,16 +229,14 @@
                     openssl req -text -noout -in san."$DOMAIN".csr
                 done
                 ;;
-
-            "${GeoTrust}" )
-                opensslEVcsr
-                clear
-                ;;
-
+            "${GeoTrust}" ) opensslEVcsr; clear;;
         esac
     }
 
+
+#
 # 3) Creates all the files in the dedicated directory
+#
     createFilesAndDirectorys(){
         FILENAME="$DIRECTORY""$PREFIX""$DOMAIN"
         touch "${FILENAME}".crt "${FILENAME}".pem "${FILENAME}".int "$DIRECTORY"Notizen
@@ -237,60 +268,65 @@
         FINDINGS=$(find ~/git/puppet/ -name "$DOMAIN*.*" | grep -E 'prod|legacy' | grep -E 'pem|crt'); printf "%s$FINDINGS"
     }
 
+#
 # 4) Creating the notes in the created folder
-createNotes(){
-    printf "%b\n"                                     \
-    "Domain: ""$CN$DOMAIN""\n"                        \
-    "TXT-Record: \n"                                  \
-    "Hallo, der Serviceauftrag wurde erledigt.\n"     \
-    "@BO Hier sind die zugehörigen SSL-Zertifikatsdaten für $CN$DOMAIN\n\t" \
-    "Domain:            $CN$DOMAIN  "                 \
-    "Erstellt:          "                             \
-    "Expire:            "                             \
-    "Type:              ${CERTIFICATE_TYPEWRITTEN}  " \
-    "Approver-type:     "                             \
-    "ObjectID:          \n"                           \
-    "<BILD>\n"                                        \
-    "Viele Grüße"                                     \
-    "${FULLNAME} \n" >> Notizen
-}
+#
+    createNotes(){
+        printf "%b\n"                                     \
+        "Domain: ""$CN$DOMAIN""\n"                        \
+        "TXT-Record: \n"                                  \
+        "Hallo, der Serviceauftrag wurde erledigt.\n"     \
+        "@BO Hier sind die zugehörigen SSL-Zertifikatsdaten für $CN$DOMAIN\n\t" \
+        "Domain:            $CN$DOMAIN  "                 \
+        "Erstellt:          "                             \
+        "Expire:            "                             \
+        "Type:              ${CERTIFICATE_TYPEWRITTEN}  " \
+        "Approver-type:     "                             \
+        "ObjectID:          \n"                           \
+        "<BILD>\n"                                        \
+        "Viele Grüße"                                     \
+        "${FULLNAME} \n" >> Notizen
+    }
 
-#Checking for and opening the old cert files in the File Explorer if thats wanted 
-openOptionals(){
-    printf "\n\nSoll ich die Ordner und Seiten öffnen? ";
-    askForYesOrNo
-    if [ "${ANSWER}" == "yes" ]; then
-    	nemo --no-default-window "$DIRECTORY"
-    	code "$DIRECTORY"
-   	    firefox "$DOMAIN"
-    	firefox "https://service.continum.net/services/dns/index"
-    	firefox "https://gui.cps-datensysteme.de/group.php/sslcert/create/sslcert?step=0&"
-    else
-        printf "\nOkay, ich öffne sie nicht. Bye!\n\n"
-    fi
-    exit
-}
+    #Checking for and opening the old cert files in the File Explorer if thats wanted
+    openOptionals(){
+        printf "\n\nSoll ich die Ordner und Seiten öffnen? ";
+        askForYesOrNo
+        if [ "${ANSWER}" == "yes" ]; then
+        	nemo --no-default-window "$DIRECTORY"
+        	code "$DIRECTORY"
+       	    firefox "$DOMAIN"
+        	firefox "https://service.continum.net/services/dns/index"
+        	firefox "https://gui.cps-datensysteme.de/group.php/sslcert/create/sslcert?step=0&"
+        else
+            printf "\nOkay, ich öffne sie nicht. Bye!\n\n"
+        fi
+        exit
+    }
 
-# This controls the order of execution in the script in case you want to shortcut it with optional parameters
-case $1 in
--f) CERTIFICATE_TYPE=1;
-    DOMAIN_UNCONVERTED=$2;
-    DOMAIN=$DOMAIN_UNCONVERTED;
-    setPrefixAndCN;
-    generateCSR;
-    createFilesAndDirectorys;
-    printOutputs;
-    createNotes;
-    ;;
-*)  getType;
-    setPrefixAndCN;
-    getDomainName;
-    generateCSR;
-    createFilesAndDirectorys;
-    printInputs;
-    printOutputs;
-    createNotes;
-    openOptionals;
-esac
-
+    # This controls the order of execution in the script in case you want to shortcut it with optional parameters
+    OPTIONS=$1
+    case ${OPTIONS} in
+        -f) # (-f)ast creation of AlphaSSL certificate
+            CERTIFICATE_TYPE=1;
+            DOMAIN_UNCONVERTED="${2}";
+            DOMAIN=${DOMAIN_UNCONVERTED};
+            # Order of execution
+            setPrefixAndCN;
+            generateCSR;
+            createFilesAndDirectorys;
+            printInputs;
+            printOutputs;
+            createNotes;
+            ;;
+        *)  askForCertType;
+            setPrefixAndCN;
+            askForDomainname;
+            generateCSR;
+            createFilesAndDirectorys;
+            printInputs;
+            printOutputs;
+            createNotes;
+            openOptionals;
+    esac
 exit
