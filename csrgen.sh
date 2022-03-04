@@ -1,33 +1,3 @@
-Skip to content
-Product 
-Team
-Enterprise
-Explore 
-Marketplace
-Pricing 
-Search
-Sign in
-Sign up
-D-ctrl
-/
-csrgen
-Public
-Code
-Issues
-Pull requests
-Actions
-Projects
-Wiki
-Security
-Insights
-csrgen/csrgen.sh
-
-David Wendl Added -f option to create csrs faster
-Latest commit c8cc009 1 hour ago
- History
- 1 contributor
-Executable File  303 lines (276 sloc)  11.5 KB
-  
 #!/bin/bash
 #-eax
 AlphaSSL=1
@@ -48,18 +18,18 @@ GeoTrust=5
             read -rp "Wie ist dein Vorname? (Der kommt in das E-Mailtemplate):       " FIRSTNAME
             read -rp "Wie ist dein Nachname?:                                        " LASTNAME
             read -rp "In welchen Folder sollen die CSRs? (Pfad ab HOME angeben):     " FOLDER; FOLDER=~/${FOLDER}
-            printf "\n\
-            %sFOLDER=$FOLDER/\n\
-            USERKUERZEL=${USERKUERZEL}\n\
+            printf "\n                              \
+            %sFOLDER=$FOLDER/\n                     \
+            USERKUERZEL=${USERKUERZEL}\n            \
             FULLNAME=\'${FIRSTNAME} ${LASTNAME}'\n" \
-           > ${CONFIG}
+            > ${CONFIG}
         fi
         #Next line exists so shellcheck wont throw an error
         #shellcheck source=/dev/null
         source ${CONFIG}
         clear
 
-     # If ("Zertifikate")-Folder exists(-e) then do nothing (: = Do nothing) else create it
+     # If ("Zertifikate")-Folder doesn't (! negates) exist(-e) then create it
        if [ ! -e "${FOLDER}" ]; then mkdir "${FOLDER}"; fi
 
     ##Function(Mini-program) to ask for yes or no
@@ -84,7 +54,6 @@ GeoTrust=5
     askForSubdomain() {
         printf "\nHat die Domain eine Subdomain? (Nicht www.)"
         askForYesOrNo
-        clear
         case ${ANSWER} in
             yes) printf "\nFormat: subdomain.domain.tld"; SUBDOMAIN="yes" ;;
             no)  printf "\nFormat: (Nicht www.)domain.tld"; SUBDOMAIN="no"  ;;
@@ -93,61 +62,53 @@ GeoTrust=5
     ##---------
 
 #
-# 1) Choosing Cert type and determining prefix for Filename
+# 1) Functions to choose the Cert type and determining prefix for Filename
 #
     askForCertType() {
-        printf "%b\n" "\n##This is CSRgen##\n" \
-        "   Wähle den Zertifikatstyp"     \
-        "   AlphaSSL          = 1"        \
-        "   Wildcard          = 2"        \
-        "   SAN               = 3"        \
-        "   LetsEncrypt       = 4"        \
-        "   GeoTrust EV       = 5\n"
-        read -rp "Wähle 1 - 5: " CERTIFICATE_TYPE
+        printf "%b\n" "ᵀʰᵃⁿᵏ ʸᵒᵘ ᶠᵒʳ ᵘˢⁱⁿᵍ \n𝘾𝙎𝙍𝙜𝙚𝙣\n" \
+        "Wähle den Zertifikatstyp" \
+        "   AlphaSSL          = 1" \
+        "   Wildcard          = 2" \
+        "   SAN               = 3" \
+        "   LetsEncrypt       = 4" \
+        "   GeoTrust EV       = 5" 
+        read -rp "                     ↳ " CERTIFICATE_TYPE
     }
 
     setPrefixAndCN(){
-       # if [ -e "${OPTIONS}" ]; then CERTIFICATE_TYPE=$2 fi
         case "${CERTIFICATE_TYPE}" in
-            ![1-5] ) # Number not between 1-5:          ---> Ask again
-                printf "\nDas ist keine Nummer zwischen 1-5, versuchs nochmal.\n"
-                sleep 2s; clear; askForCertType ;;
-
-            "${AlphaSSL}" | "${GeoTrust}" ) #:          ---> Ask if its for a subdomain before changing the prefix
+            "${AlphaSSL}" | "${GeoTrust}" ) 
                 if [ "${CERTIFICATE_TYPE}" = "${GeoTrust}" ]; then EV="yes"; fi
-                if [ "${SUBDOMAIN}" = "yes" ]; then PREFIX=""; else PREFIX="www." CN="www."; fi
+                #If it has a subdomain the prefix is not needed
+                if [ "${SUBDOMAIN}" = "yes" ]; then PREFIX=""; else PREFIX="www." CN="www."; fi 
                 ;;
-
-            "${Wildcard}" ) #:                          ---> Ask if its a certificate with EV
+            "${Wildcard}" ) 
                 PREFIX="wc." CN="*."
+                # Ask if its a certificate with EV
                 printf "\n\nIst es ein Zertifikat mit Extended Validation (EV)?"
-                askForYesOrNo
-                EV=${ANSWER}
+                askForYesOrNo; EV=${ANSWER}
                 askForSubdomain
                 ;;
-
-            "${SAN}") #:                                ---> Only change the prefix
-                PREFIX="san." ;;
-
-            "${LetsEncrypt}") #:                        ---> Optionally prompts to the SB2-Website and then exits
+            "${SAN}") 
+                PREFIX="san." 
+                ;;
+            "${LetsEncrypt}") 
+                # prompts to the SB2-Website and then exits
                 SB2LINK="https://service.continum.net/services/ssl-certificates"
                 printf "%b\n\n" \
-                "LetsEncrypt-Zertifikate kannst du über den Service2 bestellen: ${SB2LINK}" \
-                "Soll ich ihn in Firefox öffnen?"
-                askForYesOrNo
-                case ${ANSWER} in
-                    yes) firefox "${SB2LINK}"; exit 1 ;;
-                    no)  printf "\nOkay, bye! \n\n"; exit 1 ;;
-                esac ;;
+                "LetsEncrypt-Zertifikate kannst du über den Service2 bestellen: ${SB2LINK}"; exit 1 
+                ;;
+            *)
+                printf "\nDas ist keine Nummer zwischen 1-5, versuchs nochmal.\n"
+                sleep 2s; clear; askForCertType ;;
         esac
     }
 
-    # Reading the Name of the Domain the Cert is being made for
-    convertUmlauts() {
-            #Converts umlauts with idn
+    #Converts umlauts with idn
+    convertUmlauts() {   
         case "${DOMAIN_UNCONVERTED}" in
             *[äÄöÖüÜ]*) DOMAIN=$(idn "${DOMAIN_UNCONVERTED}");
-                # Exits in case its not installed
+                # 127 is the exitcode($?) in case a command is not installed. In this case csrgen will exit.
                 if [  "$?" -eq 127  ]; then printf "\nInstalliere idn um Umlaute zu konvertieren\n\n"; exit 127; fi
             ;;
             *) DOMAIN="${DOMAIN_UNCONVERTED}" ;;
@@ -157,12 +118,13 @@ GeoTrust=5
     askForDomainname(){
         printf "\n"
         read -rp "Nenne mir jetzt den Namen der Domain: " DOMAIN_UNCONVERTED
+        printf "↳"
         convertUmlauts
     }
 
 
 #
-# 2) Generating the csr-files with openssl.
+# 2) Functions to generate the csr-, and keyfiles with openssl.
 #
     # Generates standard csr
     opensslStandardcsr() {
@@ -189,53 +151,58 @@ GeoTrust=5
             -keyout  $PREFIX"$DOMAIN".key -out $PREFIX"$DOMAIN".csr
     }
 
+    # Generates SAN csr
+    opensslSANcsr() {
+        askForEVdata
+        # (Prints the needed variables into the file openssl.conf, wich will be used to generate the SAN-csr)
+        printf "%b\n" "[req]" \
+           "distinguished_name = req_distinguished_name" \
+           "req_extensions = v3_req" \
+           "prompt = no" \
+           "[req_distinguished_name]" \
+           "C = ${LAND}" \
+           "ST = ${BUNDESLAND}" \
+           "L = ${STADT}" \
+           "O = ${FIRMENNAME}" \
+           "OU = ${ABTEILUNGSNAME}" \
+           "CN = ${DOMAIN}" \
+           "[v3_req]" \
+           "keyUsage = keyEncipherment, dataEncipherment" \
+           "extendedKeyUsage = serverAuth" \
+           "subjectAltName = @alt_names" \
+           "[alt_names]" >> openssl.cnf
+           
+        # Puts the Domainnames into the openssl.conf. Format:  DNS.x = domain.tld
+        printf "\n\nWeitere Domainnamen getrennt mit einem Leerzeichen: "; read -r SANDOMAINS
+        COUNTER=0
+        for FQDN in ${SANDOMAINS}
+        do
+            (( COUNTER++ )) || true
+            printf "DNS.%s${COUNTER} = ${FQDN}\n" >> openssl.cnf
+            openssl genrsa -out san."$DOMAIN".key 2048
+            openssl req -new -out san."$DOMAIN".csr -key san."$DOMAIN".key -config openssl.cnf
+            openssl req -text -noout -in san."$DOMAIN".csr
+        done
+    }
+
+    # Generates the csr based on the certificate type
     generateCSR(){
-        # Format: 2022.02.24
+        # Format:   2022.02.24
         DATE=$(date +"%Y.%m.%d")
         DIRECTORY=$FOLDER$DATE-$PREFIX$DOMAIN/
         mkdir "$DIRECTORY"; cd "$DIRECTORY" || return
 
         case ${CERTIFICATE_TYPE} in
-            "${AlphaSSL}" ) opensslStandardcsr;;
+            "${AlphaSSL}" ) opensslStandardcsr ;;
             "${Wildcard}" ) if [ "${EV}" = "yes" ]; then opensslEVcsr; else opensslStandardcsr; fi ;;
-            "${SAN}" ) askForEVdata
-                # (Prints the needed variables into the file openssl.conf, wich will be used to generate the SAN-csr)
-                printf "%b\n" "[req]" \
-                   "distinguished_name = req_distinguished_name" \
-                   "req_extensions = v3_req" \
-                   "prompt = no" \
-                   "[req_distinguished_name]" \
-                   "C = ${LAND}" \
-                   "ST = ${BUNDESLAND}" \
-                   "L = ${STADT}" \
-                   "O = ${FIRMENNAME}" \
-                   "OU = ${ABTEILUNGSNAME}" \
-                   "CN = ${DOMAIN}" \
-                   "[v3_req]" \
-                   "keyUsage = keyEncipherment, dataEncipherment" \
-                   "extendedKeyUsage = serverAuth" \
-                   "subjectAltName = @alt_names" \
-                   "[alt_names]" >> openssl.cnf
-
-                # This part puts the Domainnames into the openssl.conf. Format:  DNS.x = domain.tld
-                read -rp "\n\nWeitere Domainnamen getrennt mit einem Leerzeichen: " SANDOMAINS
-                COUNTER=0
-                for FQDN in ${SANDOMAINS}
-                do
-                    (( COUNTER++ )) || true
-                    printf "DNS.%s${COUNTER} = ${FQDN}\n" >> openssl.cnf
-                    openssl genrsa -out san."$DOMAIN".key 2048
-                    openssl req -new -out san."$DOMAIN".csr -key san."$DOMAIN".key -config openssl.cnf
-                    openssl req -text -noout -in san."$DOMAIN".csr
-                done
-                ;;
-            "${GeoTrust}" ) opensslEVcsr; clear;;
+            "${SAN}" )      opensslSANcsr ;;
+            "${GeoTrust}" ) opensslEVcsr  ;;
         esac
     }
 
 
 #
-# 3) Creates all the files in the dedicated directory
+# 3) Functions to create all the files in the dedicated directory
 #
     createFilesAndDirectorys(){
         FILENAME="$DIRECTORY""$PREFIX""$DOMAIN"
@@ -269,7 +236,7 @@ GeoTrust=5
     }
 
 #
-# 4) Creating the notes in the created folder
+# 4) Functions for creating the notes in the created folder
 #
     createNotes(){
         printf "%b\n"                                     \
@@ -304,29 +271,30 @@ GeoTrust=5
         exit
     }
 
+    createAndPrint(){
+        generateCSR
+        createFilesAndDirectorys
+        printInputs
+        printOutputs
+        createNotes
+    }
+
     # This controls the order of execution in the script in case you want to shortcut it with optional parameters
     OPTIONS=$1
     case ${OPTIONS} in
         -f) # (-f)ast creation of AlphaSSL certificate
-            CERTIFICATE_TYPE=1;
-            DOMAIN_UNCONVERTED="${2}";
-            DOMAIN=${DOMAIN_UNCONVERTED};
+            CERTIFICATE_TYPE=1
+            DOMAIN_UNCONVERTED="${2}"
+            DOMAIN=${DOMAIN_UNCONVERTED}
             # Order of execution
-            setPrefixAndCN;
-            generateCSR;
-            createFilesAndDirectorys;
-            printInputs;
-            printOutputs;
-            createNotes;
+            setPrefixAndCN
+            createAndPrint
             ;;
-        *)  askForCertType;
-            setPrefixAndCN;
-            askForDomainname;
-            generateCSR;
-            createFilesAndDirectorys;
-            printInputs;
-            printOutputs;
-            createNotes;
-            openOptionals;
+        -a|*)
+            askForCertType
+            setPrefixAndCN
+            askForDomainname
+            createAndPrint
+            openOptionals
     esac
 exit
