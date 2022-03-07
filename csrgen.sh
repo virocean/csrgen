@@ -71,32 +71,32 @@ GeoTrust=5
         "   Wildcard          = 2" \
         "   SAN               = 3" \
         "   LetsEncrypt       = 4" \
-        "   GeoTrust EV       = 5" 
+        "   GeoTrust EV       = 5"
         read -rp "                     ↳ " CERTIFICATE_TYPE
     }
 
     setPrefixAndCN(){
         case "${CERTIFICATE_TYPE}" in
-            "${AlphaSSL}" | "${GeoTrust}" ) 
+            "${AlphaSSL}" | "${GeoTrust}" )
                 if [ "${CERTIFICATE_TYPE}" = "${GeoTrust}" ]; then EV="yes"; fi
                 #If it has a subdomain the prefix is not needed
-                if [ "${SUBDOMAIN}" = "yes" ]; then PREFIX=""; else PREFIX="www." CN="www."; fi 
+                if [ "${SUBDOMAIN}" = "yes" ]; then PREFIX=""; else PREFIX="www." CN="www."; fi
                 ;;
-            "${Wildcard}" ) 
+            "${Wildcard}" )
                 PREFIX="wc." CN="*."
                 # Ask if its a certificate with EV
                 printf "\n\nIst es ein Zertifikat mit Extended Validation (EV)?"
                 askForYesOrNo; EV=${ANSWER}
                 askForSubdomain
                 ;;
-            "${SAN}") 
-                PREFIX="san." 
+            "${SAN}")
+                PREFIX="san."
                 ;;
-            "${LetsEncrypt}") 
+            "${LetsEncrypt}")
                 # prompts to the SB2-Website and then exits
                 SB2LINK="https://service.continum.net/services/ssl-certificates"
                 printf "%b\n\n" \
-                "LetsEncrypt-Zertifikate kannst du über den Service2 bestellen: ${SB2LINK}"; exit 1 
+                "LetsEncrypt-Zertifikate kannst du über den Service2 bestellen: ${SB2LINK}"; exit 1
                 ;;
             *)
                 printf "\nDas ist keine Nummer zwischen 1-5, versuchs nochmal.\n"
@@ -105,7 +105,7 @@ GeoTrust=5
     }
 
     #Converts umlauts with idn
-    convertUmlauts() {   
+    convertUmlauts() {
         case "${DOMAIN_UNCONVERTED}" in
             *[äÄöÖüÜ]*) DOMAIN=$(idn "${DOMAIN_UNCONVERTED}");
                 # 127 is the exitcode($?) in case a command is not installed. In this case csrgen will exit.
@@ -171,7 +171,7 @@ GeoTrust=5
            "extendedKeyUsage = serverAuth" \
            "subjectAltName = @alt_names" \
            "[alt_names]" >> openssl.cnf
-           
+
         # Puts the Domainnames into the openssl.conf. Format:  DNS.x = domain.tld
         printf "\n\nWeitere Domainnamen getrennt mit einem Leerzeichen: "; read -r SANDOMAINS
         COUNTER=0
