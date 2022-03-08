@@ -78,12 +78,9 @@ GeoTrust=5
     setPrefixAndCN(){
         case "${CERTIFICATE_TYPE}" in
             "${AlphaSSL}" | "${GeoTrust}" )
+                if [ "${CERTIFICATE_TYPE}" = "${GeoTrust}" ]; then EV="yes"; fi
                 #If it has a subdomain the prefix is not needed
-                    #case "${SUBDOMAIN}" in
-                    #    yes ) PREFIX="" ;;
-                    #    no ) PREFIX="www." CN="www." ;;
-                    #esac
-                if [ "${SUBDOMAIN}" == "yes" ]; then PREFIX=""; else PREFIX="www." CN="www."; fi
+                if [ "${SUBDOMAIN}" = "yes" ]; then PREFIX=""; else PREFIX="www." CN="www."; fi
                 ;;
             "${Wildcard}" )
                 PREFIX="wc." CN="*."
