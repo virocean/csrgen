@@ -41,29 +41,29 @@ GeoTrust=5
         read -r INPUT
         ## Format the answers so they're always "yes" or "no" and nothing else
         case "${INPUT}" in
-            yes|y|Y) ANSWER="yes" ;;
-            no|n|N)  ANSWER="no"  ;;
+            y*|Y*|j*|J*) ANSWER=yes ;;
+            n*|N*) ANSWER=no  ;;
             *) #(else)
                 printf "\"yes\" or \"no\": "
                 ALREADYASKED="yes"
                 askForYesOrNo   ;;
         esac
     }
-    ##---------
-    # Function to ask for Subdomains
-    askForSubdomain() {
-        printf "\nHat die Domain eine Subdomain? (Nicht www.)"
-        askForYesOrNo
-        case ${ANSWER} in
-            yes) printf "\nFormat: subdomain.domain.tld"; SUBDOMAIN="yes" ;;
-            no)  printf "\nFormat: (Nicht www.)domain.tld"; SUBDOMAIN="no"  ;;
-        esac
-    }
-    ##---------
 
 #
 # 1) Functions to choose the Cert type and determining prefix for Filename
 #
+    # Function to ask for Subdomains
+    askForSubdomain() {
+        printf "\nHat die Domain eine Subdomain? (Nicht www.)"
+        askForYesOrNo
+        SUBDOMAIN="${ANSWER}"
+        case "${ANSWER}" in
+            yes ) printf "\nFormat:\t\t\t\t      subdomain.domain.tld" ;;
+            no ) printf "\nFormat:\t\t\t\t      (Nicht www.)domain.tld";;
+        esac
+    }
+
     askForCertType() {
         printf "%b\n" "ᵀʰᵃⁿᵏ ʸᵒᵘ ᶠᵒʳ ᵘˢⁱⁿᵍ \n𝘾𝙎𝙍𝙜𝙚𝙣\n" \
         "Wähle den Zertifikatstyp" \
@@ -78,9 +78,12 @@ GeoTrust=5
     setPrefixAndCN(){
         case "${CERTIFICATE_TYPE}" in
             "${AlphaSSL}" | "${GeoTrust}" )
-                if [ "${CERTIFICATE_TYPE}" = "${GeoTrust}" ]; then EV="yes"; fi
                 #If it has a subdomain the prefix is not needed
-                if [ "${SUBDOMAIN}" = "yes" ]; then PREFIX=""; else PREFIX="www." CN="www."; fi
+                    #case "${SUBDOMAIN}" in
+                    #    yes ) PREFIX="" ;;
+                    #    no ) PREFIX="www." CN="www." ;;
+                    #esac
+                if [ "${SUBDOMAIN}" == "yes" ]; then PREFIX=""; else PREFIX="www." CN="www."; fi
                 ;;
             "${Wildcard}" )
                 PREFIX="wc." CN="*."
@@ -195,7 +198,7 @@ GeoTrust=5
         case ${CERTIFICATE_TYPE} in
             "${AlphaSSL}" ) opensslStandardcsr ;;
             "${Wildcard}" ) if [ "${EV}" = "yes" ]; then opensslEVcsr; else opensslStandardcsr; fi ;;
-            "${SAN}" )      opensslSANcsr ;;
+            "${SAN}"      ) opensslSANcsr ;;
             "${GeoTrust}" ) opensslEVcsr  ;;
         esac
     }
@@ -286,12 +289,14 @@ GeoTrust=5
             CERTIFICATE_TYPE=1
             DOMAIN_UNCONVERTED="${2}"
             DOMAIN=${DOMAIN_UNCONVERTED}
+            EV="no"
             # Order of execution
             setPrefixAndCN
             createAndPrint
             ;;
-        -a|*)
+        *)
             askForCertType
+            askForSubdomain
             setPrefixAndCN
             askForDomainname
             createAndPrint
