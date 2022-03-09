@@ -50,7 +50,7 @@ def askForCertType():
                              ↳ """))
         return CERTIFICATE_TYPE
     except: print('Das ist keine Nummer zwischen 1-5, versuchs nochmal.')
-
+ 
 def setPrefixAndCN(CERTIFICATE_TYPE):
     global SUBDOMAIN
     match CERTIFICATE_TYPE:
@@ -78,13 +78,11 @@ def setPrefixAndCN(CERTIFICATE_TYPE):
 #Converts umlauts with idn
 def convertUmlauts():
     global DOMAIN_UNCONVERTED
-    convertDomain = subprocess.run(['idn', DOMAIN_UNCONVERTED], stdout=subprocess.PIPE) #Doesnt have error handling yet
-    Umlaute = re.search(pattern="*[äÄöÖüÜ]*")
-    match DOMAIN_UNCONVERTED:
-        case Umlaute: DOMAIN=convertDomain
-            # 127 is the exitcode($?) in case a command is not installed. In this case csrgen will exit.
-            if $? == 127: print('Installiere idn um Umlaute zu konvertieren'); exit 127
-        case _: DOMAIN=DOMAIN_UNCONVERTED
+    convertDomain = subprocess.call(['idn', DOMAIN_UNCONVERTED]) #Doesnt have error handling yet
+    Umlaute == re.search('[äÄöÖüÜ]', DOMAIN_UNCONVERTED)
+    match Umlaute:
+        case 'None': DOMAIN=DOMAIN_UNCONVERTED
+        case _: DOMAIN=convertDomain
 
 #def createAndPrint():
 #    generateCSR()
